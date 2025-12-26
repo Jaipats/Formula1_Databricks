@@ -1,0 +1,35 @@
+{
+  "name": "f1_data_pipeline",
+  "storage": "/Volumes/jai_patel_f1_data/racing_stats/pipeline_storage",
+  "configuration": {
+    "catalog": "jai_patel_f1_data",
+    "schema": "racing_stats"
+  },
+  "clusters": [
+    {
+      "label": "default",
+      "autoscale": {
+        "min_workers": 1,
+        "max_workers": 5
+      }
+    }
+  ],
+  "libraries": [
+    {
+      "notebook": {
+        "path": "/Workspace/Repos/<your-username>/Formula1/dlt/f1_bronze_to_silver"
+      }
+    },
+    {
+      "notebook": {
+        "path": "/Workspace/Repos/<your-username>/Formula1/dlt/f1_gold_aggregations"
+      }
+    }
+  ],
+  "target": "production",
+  "continuous": false,
+  "development": false,
+  "photon": true,
+  "channel": "CURRENT"
+}
+
