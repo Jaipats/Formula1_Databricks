@@ -6,18 +6,30 @@ Complete guide to deploying and running the F1 Data Pipeline using Databricks CL
 
 ### 1. Install Databricks CLI
 
-```bash
-# Using pip
-pip install databricks-cli
+**Note**: This guide uses the **new Databricks CLI** (v0.200+). Install using:
 
-# Or using Homebrew (macOS)
+```bash
+# Using Homebrew (macOS - recommended)
 brew tap databricks/tap
 brew install databricks
+
+# Or download from GitHub releases
+# https://github.com/databricks/cli/releases
+
+# Or using pip (for the Go-based CLI, not the old Python CLI)
+# Note: pip install databricks-cli installs the OLD Python CLI
+# Use the Go-based CLI for best compatibility
 ```
 
 Verify installation:
 ```bash
 databricks --version
+# Should show v0.200 or higher
+```
+
+**Important**: If you have the old Python `databricks-cli` package, uninstall it:
+```bash
+pip uninstall databricks-cli
 ```
 
 ### 2. Get Databricks Credentials
@@ -70,6 +82,9 @@ export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
 export DATABRICKS_TOKEN="your-token"
 export WAREHOUSE_ID="your-warehouse-id"  # Optional: for catalog setup
 
+# Optional: Specify Databricks user (auto-detected if not set)
+export DATABRICKS_USER="your.email@company.com"
+
 # Optional: use existing cluster
 export CLUSTER_ID="your-cluster-id"
 
@@ -81,13 +96,19 @@ chmod +x deploy/databricks_cli_deploy.sh
 ```
 
 This script will:
-1. ✅ Create workspace directories
-2. ✅ Upload all Python modules
-3. ✅ Upload configuration files
-4. ✅ Upload notebooks
-5. ✅ Create Unity Catalog and schema
-6. ✅ Create DLT pipeline
-7. ✅ Create ingestion job
+1. ✅ Auto-detect your Databricks user
+2. ✅ Create workspace directories
+3. ✅ Upload all Python modules
+4. ✅ Upload configuration files
+5. ✅ Upload notebooks
+6. ✅ Create Unity Catalog and schema
+7. ✅ Create DLT pipeline
+8. ✅ Create ingestion job
+
+**Note**: The script automatically detects your Databricks user email. If detection fails, set `DATABRICKS_USER` manually:
+```bash
+export DATABRICKS_USER="your.email@company.com"
+```
 
 ### Option 2: Manual Step-by-Step Deployment
 
@@ -104,21 +125,21 @@ databricks workspace mkdirs "$WORKSPACE_PATH/utils"
 databricks workspace mkdirs "$WORKSPACE_PATH/notebooks"
 databricks workspace mkdirs "$WORKSPACE_PATH/dlt"
 
-# Upload Python modules
-databricks workspace import config/__init__.py "$WORKSPACE_PATH/config/__init__.py" --language PYTHON --overwrite
-databricks workspace import config/settings.py "$WORKSPACE_PATH/config/settings.py" --language PYTHON --overwrite
-databricks workspace import utils/__init__.py "$WORKSPACE_PATH/utils/__init__.py" --language PYTHON --overwrite
-databricks workspace import utils/api_client.py "$WORKSPACE_PATH/utils/api_client.py" --language PYTHON --overwrite
-databricks workspace import utils/data_fetcher.py "$WORKSPACE_PATH/utils/data_fetcher.py" --language PYTHON --overwrite
+# Upload Python modules (using new Databricks CLI syntax)
+databricks workspace import "$WORKSPACE_PATH/config/__init__.py" --file config/__init__.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/config/settings.py" --file config/settings.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/utils/__init__.py" --file utils/__init__.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/utils/api_client.py" --file utils/api_client.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/utils/data_fetcher.py" --file utils/data_fetcher.py --language PYTHON --overwrite
 
 # Upload configuration
-databricks workspace import config/pipeline_config.yaml "$WORKSPACE_PATH/config/pipeline_config.yaml" --overwrite
+databricks workspace import "$WORKSPACE_PATH/config/pipeline_config.yaml" --file config/pipeline_config.yaml --format AUTO --overwrite
 
 # Upload notebooks
-databricks workspace import notebooks/01_ingest_f1_data.py "$WORKSPACE_PATH/notebooks/01_ingest_f1_data" --language PYTHON --overwrite
-databricks workspace import notebooks/02_explore_data.py "$WORKSPACE_PATH/notebooks/02_explore_data" --language PYTHON --overwrite
-databricks workspace import dlt/f1_bronze_to_silver.py "$WORKSPACE_PATH/dlt/f1_bronze_to_silver" --language PYTHON --overwrite
-databricks workspace import dlt/f1_gold_aggregations.py "$WORKSPACE_PATH/dlt/f1_gold_aggregations" --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/notebooks/01_ingest_f1_data" --file notebooks/01_ingest_f1_data.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/notebooks/02_explore_data" --file notebooks/02_explore_data.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/dlt/f1_bronze_to_silver" --file dlt/f1_bronze_to_silver.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/dlt/f1_gold_aggregations" --file dlt/f1_gold_aggregations.py --language PYTHON --overwrite
 ```
 
 #### Step 2: Create Unity Catalog

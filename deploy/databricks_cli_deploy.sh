@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 # Configuration - UPDATE THESE VALUES
 DATABRICKS_HOST="${DATABRICKS_HOST:-}"  # e.g., https://your-workspace.cloud.databricks.com
 DATABRICKS_TOKEN="${DATABRICKS_TOKEN:-}"  # Your personal access token
-WORKSPACE_PATH="/Workspace/Users/${USER}/Formula1"  # Where to upload files in Databricks
+DATABRICKS_USER="${DATABRICKS_USER:-}"  # Optional: Databricks user email (will be auto-detected)
 CATALOG_NAME="jai_patel_f1_data"
 SCHEMA_NAME="racing_stats"
 CLUSTER_ID="${CLUSTER_ID:-}"  # Optional: existing cluster ID
@@ -52,6 +52,28 @@ export DATABRICKS_HOST
 export DATABRICKS_TOKEN
 
 echo -e "${GREEN}✓ Databricks credentials configured${NC}"
+
+# Get current Databricks user
+echo "Detecting Databricks user..."
+if [ -z "$DATABRICKS_USER" ]; then
+    # Try to get current user from Databricks API
+    DATABRICKS_USER=$(databricks current-user me 2>/dev/null | jq -r '.userName' 2>/dev/null) || \
+    DATABRICKS_USER=$(curl -s -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+        "${DATABRICKS_HOST}/api/2.0/preview/scim/v2/Me" | jq -r '.userName' 2>/dev/null) || \
+    DATABRICKS_USER="${USER}@company.com"
+    
+    if [ "$DATABRICKS_USER" = "null" ] || [ -z "$DATABRICKS_USER" ]; then
+        echo -e "${YELLOW}Could not auto-detect user. Using default: ${USER}@company.com${NC}"
+        echo -e "${YELLOW}Set DATABRICKS_USER environment variable if this is incorrect${NC}"
+        DATABRICKS_USER="${USER}@company.com"
+    fi
+fi
+
+echo -e "${GREEN}✓ Databricks user: ${DATABRICKS_USER}${NC}"
+
+# Set workspace path using the detected user
+WORKSPACE_PATH="/Workspace/Users/${DATABRICKS_USER}/Formula1"
+echo -e "${GREEN}✓ Workspace path: ${WORKSPACE_PATH}${NC}"
 echo ""
 
 # Step 1: Create workspace directory
@@ -66,27 +88,27 @@ echo ""
 
 # Step 2: Upload Python files
 echo -e "${BLUE}Step 2: Uploading Python modules...${NC}"
-databricks workspace import config/__init__.py "$WORKSPACE_PATH/config/__init__.py" --language PYTHON --overwrite
-databricks workspace import config/settings.py "$WORKSPACE_PATH/config/settings.py" --language PYTHON --overwrite
-databricks workspace import utils/__init__.py "$WORKSPACE_PATH/utils/__init__.py" --language PYTHON --overwrite
-databricks workspace import utils/api_client.py "$WORKSPACE_PATH/utils/api_client.py" --language PYTHON --overwrite
-databricks workspace import utils/data_fetcher.py "$WORKSPACE_PATH/utils/data_fetcher.py" --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/config/__init__.py" --file config/__init__.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/config/settings.py" --file config/settings.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/utils/__init__.py" --file utils/__init__.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/utils/api_client.py" --file utils/api_client.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/utils/data_fetcher.py" --file utils/data_fetcher.py --language PYTHON --overwrite
 echo -e "${GREEN}✓ Python modules uploaded${NC}"
 echo ""
 
 # Step 3: Upload configuration files
 echo -e "${BLUE}Step 3: Uploading configuration files...${NC}"
-databricks workspace import config/pipeline_config.yaml "$WORKSPACE_PATH/config/pipeline_config.yaml" --overwrite
-databricks workspace import requirements.txt "$WORKSPACE_PATH/requirements.txt" --overwrite
+databricks workspace import "$WORKSPACE_PATH/config/pipeline_config.yaml" --file config/pipeline_config.yaml --format AUTO --overwrite
+databricks workspace import "$WORKSPACE_PATH/requirements.txt" --file requirements.txt --format AUTO --overwrite
 echo -e "${GREEN}✓ Configuration files uploaded${NC}"
 echo ""
 
 # Step 4: Upload notebooks
 echo -e "${BLUE}Step 4: Uploading notebooks...${NC}"
-databricks workspace import notebooks/01_ingest_f1_data.py "$WORKSPACE_PATH/notebooks/01_ingest_f1_data" --language PYTHON --overwrite
-databricks workspace import notebooks/02_explore_data.py "$WORKSPACE_PATH/notebooks/02_explore_data" --language PYTHON --overwrite
-databricks workspace import dlt/f1_bronze_to_silver.py "$WORKSPACE_PATH/dlt/f1_bronze_to_silver" --language PYTHON --overwrite
-databricks workspace import dlt/f1_gold_aggregations.py "$WORKSPACE_PATH/dlt/f1_gold_aggregations" --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/notebooks/01_ingest_f1_data" --file notebooks/01_ingest_f1_data.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/notebooks/02_explore_data" --file notebooks/02_explore_data.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/dlt/f1_bronze_to_silver" --file dlt/f1_bronze_to_silver.py --language PYTHON --overwrite
+databricks workspace import "$WORKSPACE_PATH/dlt/f1_gold_aggregations" --file dlt/f1_gold_aggregations.py --language PYTHON --overwrite
 echo -e "${GREEN}✓ Notebooks uploaded${NC}"
 echo ""
 
