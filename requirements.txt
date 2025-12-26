@@ -1,0 +1,10 @@
+# Core dependencies for F1 Data Pipeline
+requests>=2.31.0
+pyyaml>=6.0
+pandas>=2.0.0
+databricks-sdk>=0.18.0
+
+# For local development and testing
+python-dateutil>=2.8.2
+pytest>=7.4.0
+

@@ -1,0 +1,44 @@
+# Formula 1 Data Pipeline Configuration
+# This configuration file manages Unity Catalog settings and pipeline parameters
+
+# Unity Catalog Configuration
+unity_catalog:
+  catalog: "jai_patel_f1_data" # Change this to your catalog name
+  schema: "racing_stats" # Change this to your schema name
+  volume: "raw_data" # Volume for storing raw JSON files (optional)
+
+# API Configuration
+api:
+  base_url: "https://api.openf1.org/v1"
+  rate_limit_delay: 1 # Seconds between API calls
+  timeout: 30 # Request timeout in seconds
+  retry_attempts: 3 # Number of retry attempts for failed requests
+
+# Data Configuration
+data:
+  target_year: 2025 # Year to fetch data for
+  batch_size: 1000 # Records per batch for large datasets
+
+# Pipeline Configuration
+pipeline:
+  target: "production" # Target environment: development, staging, production
+  storage_location: "/Volumes/jai_patel_f1_data/racing_stats/pipeline_storage" # Unity Catalog Volume location for checkpoints
+
+# Endpoints to fetch (set to true to enable)
+endpoints:
+  sessions: true
+  drivers: true
+  meetings: true
+  laps: true
+  car_data: true
+  position: true
+  pit: true
+  stints: true
+  weather: true
+  race_control: true
+  team_radio: true
+  intervals: true
+  location: false # Disabled by default (very large dataset)
+  overtakes: true
+  session_result: true
+  starting_grid: true
