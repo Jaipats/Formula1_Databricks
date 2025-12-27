@@ -10,9 +10,9 @@ unity_catalog:
 # API Configuration
 api:
   base_url: "https://api.openf1.org/v1"
-  rate_limit_delay: 1 # Seconds between API calls
+  rate_limit_delay: 2 # Seconds between API calls (increased to avoid 429 errors)
   timeout: 30 # Request timeout in seconds
-  retry_attempts: 3 # Number of retry attempts for failed requests
+  retry_attempts: 5 # Number of retry attempts for failed requests (increased for rate limits)
 
 # Data Configuration
 data:

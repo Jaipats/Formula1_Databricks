@@ -74,7 +74,7 @@ For the **2025 season** (configured by default):
 
 ## Error Handling
 
-The pipeline handles data availability gracefully:
+The pipeline handles data availability and API limits gracefully:
 
 ### 422 Errors (Data Not Available)
 ```
@@ -83,6 +83,16 @@ INFO: Data not available for car_data with params {'session_key': 9683, 'driver_
 - **Meaning**: The data doesn't exist for that session/driver
 - **Action**: Pipeline skips and continues
 - **Impact**: Table will have fewer records, but no failures
+
+### 429 Errors (Rate Limiting)
+```
+WARNING: Rate limit hit for car_data (429). Waiting 10 seconds before retry 1/5
+```
+- **Meaning**: Too many requests sent to the API
+- **Action**: Automatic exponential backoff (5s, 10s, 20s, 40s, 60s)
+- **Retry-After**: Respects API's Retry-After header if provided
+- **Impact**: Pipeline slows down but continues successfully
+- **Prevention**: Increased default delay to 2 seconds between requests
 
 ### Empty Results
 ```

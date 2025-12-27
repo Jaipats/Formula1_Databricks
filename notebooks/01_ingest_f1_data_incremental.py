@@ -36,7 +36,8 @@ dbutils.library.restartPython()
 
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1')
+sys.path.append(
+    '/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
 
 # Setup logging

@@ -83,6 +83,28 @@ class OpenF1Client:
                     logger.info(
                         f"Data not available for {endpoint} with params {params} (422 error)")
                     return []  # Return empty list instead of raising
+
+                # Handle 429 errors (rate limiting) with exponential backoff
+                if e.response.status_code == 429:
+                    # Check for Retry-After header
+                    retry_after = e.response.headers.get('Retry-After')
+                    if retry_after:
+                        wait_time = int(retry_after)
+                    else:
+                        # Exponential backoff with longer waits for rate limits
+                        # Max 60 seconds
+                        wait_time = min(60, (2 ** attempt) * 5)
+
+                    logger.warning(
+                        f"Rate limit hit for {endpoint} (429). Waiting {wait_time} seconds before retry {attempt + 1}/{self.retry_attempts}")
+                    time.sleep(wait_time)
+
+                    if attempt == self.retry_attempts - 1:
+                        logger.error(
+                            f"Rate limit exceeded after {self.retry_attempts} attempts for {endpoint}")
+                        raise
+                    continue  # Try again
+
                 logger.error(
                     f"HTTP error on attempt {attempt + 1} for {endpoint}: {str(e)}")
                 if attempt == self.retry_attempts - 1:
