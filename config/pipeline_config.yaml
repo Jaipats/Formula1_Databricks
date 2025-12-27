@@ -30,15 +30,15 @@ endpoints:
   drivers: true
   meetings: true
   laps: true
-  car_data: true
-  position: true
+  car_data: true  # Note: May not be available for all sessions (especially future/recent races)
+  position: true  # Note: May not be available for all sessions
   pit: true
   stints: true
   weather: true
   race_control: true
   team_radio: true
   intervals: true
-  location: false # Disabled by default (very large dataset)
+  location: false  # Disabled by default (very large dataset)
   overtakes: true
   session_result: true
   starting_grid: true

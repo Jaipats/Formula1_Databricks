@@ -74,6 +74,16 @@ class OpenF1Client:
                     raise
                 time.sleep(2 ** attempt)  # Exponential backoff
                 
+            except requests.exceptions.HTTPError as e:
+                # Handle 422 errors (data not available) gracefully
+                if e.response.status_code == 422:
+                    logger.info(f"Data not available for {endpoint} with params {params} (422 error)")
+                    return []  # Return empty list instead of raising
+                logger.error(f"HTTP error on attempt {attempt + 1} for {endpoint}: {str(e)}")
+                if attempt == self.retry_attempts - 1:
+                    raise
+                time.sleep(2 ** attempt)
+                
             except requests.exceptions.RequestException as e:
                 logger.error(f"Error on attempt {attempt + 1} for {endpoint}: {str(e)}")
                 if attempt == self.retry_attempts - 1:

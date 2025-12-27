@@ -277,6 +277,8 @@ class F1DataFetcher:
         """
         Fetch driver-specific data (car_data, position, location)
         These endpoints require both session_key and driver_number
+        
+        Note: Some data may not be available for all sessions (e.g., car_data for future/recent races)
         """
         result = {}
         
@@ -290,54 +292,75 @@ class F1DataFetcher:
                 driver_numbers = [d['driver_number'] for d in drivers]
                 session_drivers[session_key] = driver_numbers
             except Exception as e:
-                logger.error(f"Error fetching drivers for session {session_key}: {str(e)}")
+                logger.warning(f"Error fetching drivers for session {session_key}: {str(e)}")
         
         # Fetch car_data
         if endpoints.get('car_data'):
-            logger.info("Fetching car data...")
+            logger.info("Fetching car data (may be unavailable for some sessions)...")
             all_car_data = []
+            successful_fetches = 0
+            skipped_fetches = 0
             
             for session_key, driver_numbers in session_drivers.items():
                 for driver_number in driver_numbers:
                     try:
                         car_data = self.api_client.get_car_data(session_key, driver_number)
-                        all_car_data.extend(car_data)
+                        if car_data:  # Only count if we got data
+                            all_car_data.extend(car_data)
+                            successful_fetches += 1
+                        else:
+                            skipped_fetches += 1
                     except Exception as e:
-                        logger.error(f"Error fetching car data for session {session_key}, driver {driver_number}: {str(e)}")
+                        logger.warning(f"Skipping car data for session {session_key}, driver {driver_number}: {str(e)}")
+                        skipped_fetches += 1
             
-            logger.info(f"Fetched {len(all_car_data)} car data records")
+            logger.info(f"Fetched {len(all_car_data)} car data records ({successful_fetches} successful, {skipped_fetches} skipped)")
             result['car_data'] = pd.DataFrame(all_car_data) if all_car_data else pd.DataFrame()
         
         # Fetch position
         if endpoints.get('position'):
             logger.info("Fetching position data...")
             all_positions = []
+            successful_fetches = 0
+            skipped_fetches = 0
             
             for session_key, driver_numbers in session_drivers.items():
                 for driver_number in driver_numbers:
                     try:
                         positions = self.api_client.get_position(session_key, driver_number)
-                        all_positions.extend(positions)
+                        if positions:
+                            all_positions.extend(positions)
+                            successful_fetches += 1
+                        else:
+                            skipped_fetches += 1
                     except Exception as e:
-                        logger.error(f"Error fetching position for session {session_key}, driver {driver_number}: {str(e)}")
+                        logger.warning(f"Skipping position for session {session_key}, driver {driver_number}: {str(e)}")
+                        skipped_fetches += 1
             
-            logger.info(f"Fetched {len(all_positions)} position records")
+            logger.info(f"Fetched {len(all_positions)} position records ({successful_fetches} successful, {skipped_fetches} skipped)")
             result['position'] = pd.DataFrame(all_positions) if all_positions else pd.DataFrame()
         
         # Fetch location (usually disabled due to size)
         if endpoints.get('location'):
             logger.info("Fetching location data...")
             all_locations = []
+            successful_fetches = 0
+            skipped_fetches = 0
             
             for session_key, driver_numbers in session_drivers.items():
                 for driver_number in driver_numbers:
                     try:
                         locations = self.api_client.get_location(session_key, driver_number)
-                        all_locations.extend(locations)
+                        if locations:
+                            all_locations.extend(locations)
+                            successful_fetches += 1
+                        else:
+                            skipped_fetches += 1
                     except Exception as e:
-                        logger.error(f"Error fetching location for session {session_key}, driver {driver_number}: {str(e)}")
+                        logger.warning(f"Skipping location for session {session_key}, driver {driver_number}: {str(e)}")
+                        skipped_fetches += 1
             
-            logger.info(f"Fetched {len(all_locations)} location records")
+            logger.info(f"Fetched {len(all_locations)} location records ({successful_fetches} successful, {skipped_fetches} skipped)")
             result['location'] = pd.DataFrame(all_locations) if all_locations else pd.DataFrame()
         
         return result
