@@ -14,6 +14,11 @@ api:
   timeout: 30 # Request timeout in seconds
   retry_attempts: 5 # Number of retry attempts for failed requests (increased for rate limits)
 
+  # Parallel processing configuration
+  parallel_endpoints: true # Enable parallel fetching of different endpoints
+  max_workers: 3 # Max parallel threads for endpoint fetching (3-5 recommended)
+  parallel_sessions: false # Enable parallel fetching within endpoints (use with caution)
+
 # Data Configuration
 data:
   target_year: 2025 # Year to fetch data for

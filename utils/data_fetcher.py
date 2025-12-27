@@ -1,12 +1,15 @@
 """
 Data Fetcher Module
 Orchestrates fetching data from OpenF1 API for all enabled endpoints
+Supports parallel processing for faster data ingestion
 """
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Callable
 from datetime import datetime
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,7 @@ class F1DataFetcher:
     def fetch_all_data(self) -> Dict[str, pd.DataFrame]:
         """
         Fetch all enabled endpoint data for the configured year
+        Supports parallel processing for faster ingestion
 
         Returns:
             Dictionary mapping endpoint names to DataFrames
@@ -38,9 +42,14 @@ class F1DataFetcher:
         year = self.config.target_year
         logger.info(f"Starting data fetch for year {year}")
 
+        # Check if parallel processing is enabled
+        parallel_config = self.config.config.get('api', {})
+        parallel_enabled = parallel_config.get('parallel_endpoints', False)
+        max_workers = parallel_config.get('max_workers', 3)
+
         all_data = {}
 
-        # Step 1: Fetch meetings and sessions
+        # Step 1: Fetch meetings and sessions (always sequential - these are prerequisites)
         logger.info("Fetching meetings...")
         meetings = self.api_client.get_meetings(year)
 
@@ -70,47 +79,172 @@ class F1DataFetcher:
         # Step 3: Fetch session-level data for each session
         endpoints = self.config.enabled_endpoints
 
+        if parallel_enabled:
+            logger.info(
+                f"Parallel processing enabled with {max_workers} workers")
+            all_data.update(self._fetch_session_data_parallel(
+                session_keys, endpoints, max_workers))
+        else:
+            logger.info("Sequential processing (parallel disabled)")
+            all_data.update(self._fetch_session_data_sequential(
+                session_keys, endpoints))
+
+        return all_data
+
+    def _fetch_session_data_sequential(self, session_keys: List[int],
+                                       endpoints: Dict[str, bool]) -> Dict[str, pd.DataFrame]:
+        """
+        Fetch session data sequentially (original method)
+
+        Args:
+            session_keys: List of session keys to fetch
+            endpoints: Dictionary of enabled endpoints
+
+        Returns:
+            Dictionary mapping endpoint names to DataFrames
+        """
+        result = {}
+
         if endpoints.get('drivers'):
-            all_data['drivers'] = self._fetch_drivers(session_keys)
+            result['drivers'] = self._fetch_drivers(session_keys)
 
         if endpoints.get('laps'):
-            all_data['laps'] = self._fetch_laps(session_keys)
+            result['laps'] = self._fetch_laps(session_keys)
 
         if endpoints.get('pit'):
-            all_data['pit'] = self._fetch_pit_stops(session_keys)
+            result['pit'] = self._fetch_pit_stops(session_keys)
 
         if endpoints.get('stints'):
-            all_data['stints'] = self._fetch_stints(session_keys)
+            result['stints'] = self._fetch_stints(session_keys)
 
         if endpoints.get('weather'):
-            all_data['weather'] = self._fetch_weather(session_keys)
+            result['weather'] = self._fetch_weather(session_keys)
 
         if endpoints.get('race_control'):
-            all_data['race_control'] = self._fetch_race_control(session_keys)
+            result['race_control'] = self._fetch_race_control(session_keys)
 
         if endpoints.get('team_radio'):
-            all_data['team_radio'] = self._fetch_team_radio(session_keys)
+            result['team_radio'] = self._fetch_team_radio(session_keys)
 
         if endpoints.get('intervals'):
-            all_data['intervals'] = self._fetch_intervals(session_keys)
+            result['intervals'] = self._fetch_intervals(session_keys)
 
         if endpoints.get('overtakes'):
-            all_data['overtakes'] = self._fetch_overtakes(session_keys)
+            result['overtakes'] = self._fetch_overtakes(session_keys)
 
         if endpoints.get('session_result'):
-            all_data['session_result'] = self._fetch_session_results(
+            result['session_result'] = self._fetch_session_results(
                 session_keys)
 
         if endpoints.get('starting_grid'):
-            all_data['starting_grid'] = self._fetch_starting_grid(session_keys)
+            result['starting_grid'] = self._fetch_starting_grid(session_keys)
 
         # Step 4: Fetch driver-specific data (car_data, position, location)
         # These require driver numbers per session
         if endpoints.get('car_data') or endpoints.get('position') or endpoints.get('location'):
-            all_data.update(self._fetch_driver_specific_data(
+            result.update(self._fetch_driver_specific_data(
                 session_keys, endpoints))
 
-        return all_data
+        return result
+
+    def _fetch_session_data_parallel(self, session_keys: List[int],
+                                     endpoints: Dict[str, bool],
+                                     max_workers: int = 3) -> Dict[str, pd.DataFrame]:
+        """
+        Fetch session data in parallel for faster processing
+
+        Args:
+            session_keys: List of session keys to fetch
+            endpoints: Dictionary of enabled endpoints
+            max_workers: Maximum number of parallel threads
+
+        Returns:
+            Dictionary mapping endpoint names to DataFrames
+        """
+        result = {}
+
+        # Define fetch tasks for each endpoint
+        fetch_tasks = []
+
+        if endpoints.get('drivers'):
+            fetch_tasks.append(
+                ('drivers', lambda: self._fetch_drivers(session_keys)))
+
+        if endpoints.get('laps'):
+            fetch_tasks.append(
+                ('laps', lambda: self._fetch_laps(session_keys)))
+
+        if endpoints.get('pit'):
+            fetch_tasks.append(
+                ('pit', lambda: self._fetch_pit_stops(session_keys)))
+
+        if endpoints.get('stints'):
+            fetch_tasks.append(
+                ('stints', lambda: self._fetch_stints(session_keys)))
+
+        if endpoints.get('weather'):
+            fetch_tasks.append(
+                ('weather', lambda: self._fetch_weather(session_keys)))
+
+        if endpoints.get('race_control'):
+            fetch_tasks.append(
+                ('race_control', lambda: self._fetch_race_control(session_keys)))
+
+        if endpoints.get('team_radio'):
+            fetch_tasks.append(
+                ('team_radio', lambda: self._fetch_team_radio(session_keys)))
+
+        if endpoints.get('intervals'):
+            fetch_tasks.append(
+                ('intervals', lambda: self._fetch_intervals(session_keys)))
+
+        if endpoints.get('overtakes'):
+            fetch_tasks.append(
+                ('overtakes', lambda: self._fetch_overtakes(session_keys)))
+
+        if endpoints.get('session_result'):
+            fetch_tasks.append(
+                ('session_result', lambda: self._fetch_session_results(session_keys)))
+
+        if endpoints.get('starting_grid'):
+            fetch_tasks.append(
+                ('starting_grid', lambda: self._fetch_starting_grid(session_keys)))
+
+        # Execute fetch tasks in parallel
+        logger.info(
+            f"Starting parallel fetch for {len(fetch_tasks)} endpoints...")
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks
+            future_to_endpoint = {
+                executor.submit(fetch_func): endpoint_name
+                for endpoint_name, fetch_func in fetch_tasks
+            }
+
+            # Process completed tasks as they finish
+            for future in as_completed(future_to_endpoint):
+                endpoint_name = future_to_endpoint[future]
+                try:
+                    data = future.result()
+                    result[endpoint_name] = data
+                    logger.info(
+                        f"✓ Completed parallel fetch for {endpoint_name}")
+                except Exception as e:
+                    logger.error(
+                        f"✗ Error in parallel fetch for {endpoint_name}: {str(e)}")
+                    # Empty DataFrame on error
+                    result[endpoint_name] = pd.DataFrame()
+
+        # Fetch driver-specific data (car_data, position, location) after main endpoints
+        # These are more complex and benefit from being done separately
+        if endpoints.get('car_data') or endpoints.get('position') or endpoints.get('location'):
+            logger.info("Fetching driver-specific data...")
+            result.update(self._fetch_driver_specific_data(
+                session_keys, endpoints))
+
+        logger.info(
+            f"✓ Parallel fetch complete for all {len(fetch_tasks)} endpoints")
+        return result
 
     def _fetch_drivers(self, session_keys: List[int]) -> pd.DataFrame:
         """Fetch drivers for all sessions"""
