@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 
 class F1DataFetcher:
     """Orchestrates data fetching from OpenF1 API"""
-    
+
     def __init__(self, api_client, config, volume_writer=None):
         """
         Initialize data fetcher
-        
+
         Args:
             api_client: OpenF1Client instance
             config: PipelineConfig instance
@@ -323,35 +323,40 @@ class F1DataFetcher:
             skipped_fetches = 0
 
             # Get filtering options from config
-            car_data_config = self.config.config.get('data', {}).get('car_data_filters', {})
+            car_data_config = self.config.config.get(
+                'data', {}).get('car_data_filters', {})
             speed_filter = car_data_config.get('speed_gte', None)
             sample_drivers = car_data_config.get('sample_drivers', False)
-            
+
             if speed_filter:
-                logger.info(f"Applying speed filter: speed >= {speed_filter} km/h")
+                logger.info(
+                    f"Applying speed filter: speed >= {speed_filter} km/h")
 
             for session_key, driver_numbers in session_drivers.items():
                 # Optionally sample drivers (for testing/reducing data volume)
                 if sample_drivers:
                     driver_numbers = driver_numbers[:5]
-                    logger.info(f"Sampling first {len(driver_numbers)} drivers for session {session_key}")
-                
+                    logger.info(
+                        f"Sampling first {len(driver_numbers)} drivers for session {session_key}")
+
                 for driver_number in driver_numbers:
                     try:
                         # Fetch with optional speed filter
                         car_data = self.api_client.get_car_data(
                             session_key, driver_number, speed_gte=speed_filter)
-                        
+
                         if car_data:
                             # Write incrementally to volume if enabled
                             if self.use_volume_staging:
                                 batch_id = f"session_{session_key}_driver_{driver_number}"
-                                self.volume_writer.write_data_batch('car_data', car_data, batch_id)
+                                self.volume_writer.write_data_batch(
+                                    'car_data', car_data, batch_id)
                             else:
                                 all_car_data.extend(car_data)
-                            
+
                             successful_fetches += 1
-                            logger.info(f"✓ Fetched {len(car_data)} car_data records for session {session_key}, driver {driver_number}")
+                            logger.info(
+                                f"✓ Fetched {len(car_data)} car_data records for session {session_key}, driver {driver_number}")
                         else:
                             skipped_fetches += 1
                     except Exception as e:
@@ -361,14 +366,16 @@ class F1DataFetcher:
 
             logger.info(
                 f"Car data summary: {successful_fetches} successful, {skipped_fetches} skipped")
-            
+
             if not self.use_volume_staging:
-                logger.info(f"Total car data records in memory: {len(all_car_data)}")
+                logger.info(
+                    f"Total car data records in memory: {len(all_car_data)}")
                 result['car_data'] = pd.DataFrame(
                     all_car_data) if all_car_data else pd.DataFrame()
             else:
                 logger.info("Car data written incrementally to volume")
-                result['car_data'] = pd.DataFrame()  # Empty - data is in volume
+                # Empty - data is in volume
+                result['car_data'] = pd.DataFrame()
 
         # Fetch position
         if endpoints.get('position'):

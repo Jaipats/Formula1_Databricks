@@ -1,12 +1,12 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Load F1 Data from Volume to Delta Tables
-# MAGIC 
+# MAGIC
 # MAGIC This notebook loads staged JSON files from Unity Catalog volumes into Bronze Delta tables.
-# MAGIC 
+# MAGIC
 # MAGIC **Prerequisites:**
 # MAGIC - Run `01_ingest_f1_data_incremental.py` first to stage data to volumes
-# MAGIC 
+# MAGIC
 # MAGIC **What this does:**
 # MAGIC - Reads JSON files from volume staging directories
 # MAGIC - Loads into Bronze Delta tables with schema inference
@@ -15,6 +15,7 @@
 
 # COMMAND ----------
 
+from config.settings import config
 import sys
 from pyspark.sql import functions as F
 from datetime import datetime
@@ -22,7 +23,6 @@ from datetime import datetime
 # Add utils to path - UPDATE THIS PATH
 sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1')
 
-from config.settings import config
 
 # COMMAND ----------
 
@@ -33,7 +33,8 @@ from config.settings import config
 
 print(f"Catalog: {config.catalog}")
 print(f"Schema: {config.schema}")
-print(f"Volume staging path: /Volumes/{config.catalog}/{config.schema}/pipeline_storage/staging/")
+print(
+    f"Volume staging path: /Volumes/{config.catalog}/{config.schema}/pipeline_storage/staging/")
 
 # COMMAND ----------
 
@@ -42,55 +43,58 @@ print(f"Volume staging path: /Volumes/{config.catalog}/{config.schema}/pipeline_
 
 # COMMAND ----------
 
+
 def load_endpoint_from_volume(endpoint_name):
     """
     Load data for an endpoint from volume staging to Delta table
-    
+
     Args:
         endpoint_name: Name of the endpoint (e.g., 'car_data', 'laps')
-    
+
     Returns:
         Number of records loaded
     """
     volume_path = f"/Volumes/{config.catalog}/{config.schema}/pipeline_storage/staging/{endpoint_name}/"
     table_name = config.get_bronze_table_name(endpoint_name)
-    
+
     try:
         # Check if path exists
         files = dbutils.fs.ls(volume_path)
-        json_files = [f.path for f in files if f.path.endswith('.json') and not f.name.startswith('_')]
-        
+        json_files = [f.path for f in files if f.path.endswith(
+            '.json') and not f.name.startswith('_')]
+
         if not json_files:
             print(f"⚠ No data files found for {endpoint_name}")
             return 0
-        
+
         print(f"Loading {endpoint_name} from {len(json_files)} files...")
-        
+
         # Read JSON files
         df = spark.read.option("multiLine", "false").json(volume_path)
-        
+
         # Add ingestion metadata
         df = df.withColumn("_ingestion_timestamp", F.current_timestamp())
         df = df.withColumn("_ingestion_date", F.current_date())
-        
+
         record_count = df.count()
-        
+
         if record_count == 0:
             print(f"⚠ No records found in {endpoint_name} files")
             return 0
-        
+
         # Write to Delta table
         print(f"Writing {record_count:,} records to {table_name}...")
-        
+
         df.write \
             .format("delta") \
             .mode("overwrite") \
             .option("overwriteSchema", "true") \
             .saveAsTable(table_name)
-        
-        print(f"✓ Successfully loaded {record_count:,} records to {table_name}")
+
+        print(
+            f"✓ Successfully loaded {record_count:,} records to {table_name}")
         return record_count
-        
+
     except Exception as e:
         print(f"✗ Error loading {endpoint_name}: {str(e)}")
         return 0
@@ -102,11 +106,13 @@ def load_endpoint_from_volume(endpoint_name):
 
 # COMMAND ----------
 
+
 # Get list of endpoints that have staged data
 staging_root = f"/Volumes/{config.catalog}/{config.schema}/pipeline_storage/staging/"
 
 try:
-    endpoint_dirs = [f.name.rstrip('/') for f in dbutils.fs.ls(staging_root) if f.isDir()]
+    endpoint_dirs = [f.name.rstrip('/')
+                     for f in dbutils.fs.ls(staging_root) if f.isDir()]
     print(f"Found staged data for {len(endpoint_dirs)} endpoints:")
     for endpoint in endpoint_dirs:
         print(f"  - {endpoint}")
@@ -169,7 +175,8 @@ for endpoint in results.keys():
         pass
 
 if record_counts:
-    counts_df = spark.createDataFrame(record_counts, ["endpoint", "record_count"])
+    counts_df = spark.createDataFrame(
+        record_counts, ["endpoint", "record_count"])
     display(counts_df.orderBy(F.desc("record_count")))
 
 # COMMAND ----------
@@ -191,15 +198,14 @@ for endpoint in results.keys():
 
 # MAGIC %md
 # MAGIC ## Next Steps
-# MAGIC 
+# MAGIC
 # MAGIC Bronze tables are now loaded! Next:
-# MAGIC 
+# MAGIC
 # MAGIC 1. **Run DLT Pipeline** to create Silver and Gold tables
 # MAGIC 2. **Create dashboards** using the analytical queries
 # MAGIC 3. **Set up Genie Space** for natural language queries
-# MAGIC 
+# MAGIC
 # MAGIC To clean up staging files after successful load:
 # MAGIC ```python
 # MAGIC # dbutils.fs.rm(f"/Volumes/{config.catalog}/{config.schema}/pipeline_storage/staging/", True)
 # MAGIC ```
-

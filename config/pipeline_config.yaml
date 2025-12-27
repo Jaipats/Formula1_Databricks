@@ -18,15 +18,15 @@ api:
 data:
   target_year: 2025 # Year to fetch data for
   batch_size: 1000 # Records per batch for large datasets
-  
+
   # Car data filtering (to reduce API response size)
   car_data_filters:
-    speed_gte: 100  # Only fetch data when speed >= 100 km/h (reduces ~40% of data)
-    sample_drivers: true  # Only fetch data for first 5 drivers per session (for testing)
-  
+    speed_gte: 100 # Only fetch data when speed >= 100 km/h (reduces ~40% of data)
+    sample_drivers: true # Only fetch data for first 5 drivers per session (for testing)
+
   # Incremental storage options
-  use_volume_staging: true  # Write data to volume files incrementally before loading to Delta
-  volume_path: "pipeline_storage/staging"  # Path within volume for staging files
+  use_volume_staging: true # Write data to volume files incrementally before loading to Delta
+  volume_path: "pipeline_storage/staging" # Path within volume for staging files
 
 # Pipeline Configuration
 pipeline:
@@ -39,15 +39,15 @@ endpoints:
   drivers: true
   meetings: true
   laps: true
-  car_data: true  # Note: May not be available for all sessions (especially future/recent races)
-  position: true  # Note: May not be available for all sessions
+  car_data: true # Note: May not be available for all sessions (especially future/recent races)
+  position: true # Note: May not be available for all sessions
   pit: true
   stints: true
   weather: true
   race_control: true
   team_radio: true
   intervals: true
-  location: false  # Disabled by default (very large dataset)
+  location: false # Disabled by default (very large dataset)
   overtakes: true
   session_result: true
   starting_grid: true

@@ -8,4 +8,3 @@ This package contains utility modules for the F1 data pipeline:
 """
 
 __version__ = "1.1.0"
-
