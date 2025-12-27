@@ -134,12 +134,35 @@ class OpenF1Client:
             params['driver_number'] = driver_number
         return self._make_request('laps', params)
     
-    def get_car_data(self, session_key: int, driver_number: int) -> List[Dict]:
-        """Get car telemetry data for a specific driver in a session"""
+    def get_car_data(self, session_key: int, driver_number: int, 
+                     date_start: str = None, date_end: str = None,
+                     speed_gte: int = None) -> List[Dict]:
+        """
+        Get car telemetry data for a specific driver in a session
+        
+        Args:
+            session_key: Session identifier
+            driver_number: Driver number
+            date_start: Optional start date filter (ISO format)
+            date_end: Optional end date filter (ISO format)
+            speed_gte: Optional minimum speed filter (reduces data volume)
+        
+        Returns:
+            List of car data records
+        """
         params = {
             'session_key': session_key,
             'driver_number': driver_number
         }
+        
+        # Add optional filters to reduce data volume
+        if date_start:
+            params['date>='] = date_start
+        if date_end:
+            params['date<='] = date_end
+        if speed_gte:
+            params['speed>='] = speed_gte
+            
         return self._make_request('car_data', params)
     
     def get_position(self, session_key: int, driver_number: int = None) -> List[Dict]:

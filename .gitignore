@@ -54,8 +54,14 @@ Thumbs.db
 # Data files (if any local caching)
 data/
 *.csv
-*.json
 *.parquet
+# Exclude JSON data files but keep config files
+**/data/*.json
+**/staging/*.json
+# Keep important JSON configs
+!dlt/pipeline_config.json
+!package.json
+!tsconfig.json
 
 # Testing
 .pytest_cache/

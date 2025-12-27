@@ -1,9 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Formula 1 Data Ingestion
-# MAGIC 
+# MAGIC
 # MAGIC This notebook fetches data from the OpenF1 API and saves it to Delta tables.
-# MAGIC 
+# MAGIC
 # MAGIC **Configuration:**
 # MAGIC - Ensure `config/pipeline_config.yaml` is configured with your Unity Catalog settings
 # MAGIC - The notebook will fetch data for the configured year (default: 2025)
@@ -14,21 +14,22 @@
 
 # COMMAND ----------
 
+from utils.data_fetcher import F1DataFetcher
+from utils.api_client import OpenF1Client
+from config.settings import config
+from datetime import datetime
+import logging
+import os
+import sys
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
-import sys
-import os
-import logging
-from datetime import datetime
 
 # Add utils to path
-sys.path.append('/Workspace/Repos/<your-username>/Formula1')  # Update this path
+# Update this path
+sys.path.append('/Workspace/Repos/<your-username>/Formula1_Databricks')
 
-from config.settings import config
-from utils.api_client import OpenF1Client
-from utils.data_fetcher import F1DataFetcher
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -113,25 +114,26 @@ for endpoint, df in all_data.items():
     if df.empty:
         print(f"Skipping {endpoint} - no data")
         continue
-    
+
     table_name = config.get_bronze_table_name(endpoint)
-    
+
     # Convert pandas DataFrame to Spark DataFrame
     spark_df = spark.createDataFrame(df)
-    
+
     # Add ingestion metadata
-    spark_df = spark_df.withColumn("_ingestion_timestamp", F.current_timestamp())
+    spark_df = spark_df.withColumn(
+        "_ingestion_timestamp", F.current_timestamp())
     spark_df = spark_df.withColumn("_ingestion_date", F.current_date())
-    
+
     # Write to Delta table (overwrite mode for full refresh)
     print(f"Writing {len(df)} records to {table_name}...")
-    
+
     spark_df.write \
         .format("delta") \
         .mode("overwrite") \
         .option("overwriteSchema", "true") \
         .saveAsTable(table_name)
-    
+
     print(f"✓ Successfully wrote to {table_name}")
 
 print("\nAll data ingestion complete!")
@@ -149,7 +151,7 @@ print("-" * 60)
 
 for endpoint in all_data.keys():
     table_name = config.get_bronze_table_name(endpoint)
-    
+
     try:
         count = spark.table(table_name).count()
         print(f"{endpoint:20s}: {count:,} records")
@@ -166,7 +168,7 @@ for endpoint in all_data.keys():
 # Preview first table with data
 for endpoint in ['meetings', 'sessions', 'drivers', 'laps']:
     table_name = config.get_bronze_table_name(endpoint)
-    
+
     try:
         print(f"\n{'=' * 60}")
         print(f"Sample data from: {endpoint}")
@@ -175,4 +177,3 @@ for endpoint in ['meetings', 'sessions', 'drivers', 'laps']:
         break  # Just show first available table
     except:
         continue
-
