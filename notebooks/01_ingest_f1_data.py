@@ -14,22 +14,25 @@
 
 # COMMAND ----------
 
+# Restart Python to load newly installed packages
+from utils.data_fetcher import F1DataFetcher
+from utils.api_client import OpenF1Client
+from config.settings import config
+from pyspark.sql import functions as F
+from datetime import datetime
+import logging
+import os
+import sys
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
-import sys
-import os
-import logging
-from datetime import datetime
-from pyspark.sql import functions as F
+# IMPORTANT: Imports MUST come AFTER restartPython() to access installed packages
 
 # Add utils to path - UPDATE THIS PATH
 sys.path.append('/Workspace/Repos/<your-username>/Formula1_Databricks')
 
-from config.settings import config
-from utils.api_client import OpenF1Client
-from utils.data_fetcher import F1DataFetcher
+# Import our modules (config.settings needs pyyaml which was just installed)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

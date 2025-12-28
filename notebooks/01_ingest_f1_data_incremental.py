@@ -17,14 +17,16 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install pyyaml requests
+# MAGIC %pip install pyyaml requests pandas
 
 # COMMAND ----------
 
+# Restart Python to load newly installed packages
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
+# IMPORTANT: Imports MUST come AFTER restartPython() to access installed packages
 import sys
 import os
 import logging
@@ -34,6 +36,7 @@ from pyspark.sql import functions as F
 # Add utils to path - UPDATE THIS PATH
 sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
+# Import our modules (config.settings needs pyyaml which was just installed)
 from config.settings import config
 from utils.api_client import OpenF1Client
 from utils.data_fetcher import F1DataFetcher
