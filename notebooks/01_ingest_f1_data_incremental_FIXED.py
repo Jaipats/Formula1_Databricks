@@ -16,27 +16,26 @@
 
 # COMMAND ----------
 
-# ⚠️⚠️⚠️ STOP! YOUR IDE IS BREAKING THIS! ⚠️⚠️⚠️
-# EVERY TIME you save, your IDE moves imports here!
-# PLEASE TURN OFF AUTO-FORMAT for notebooks/*.py files!
-# restartPython() MUST BE ALONE - NO IMPORTS BEFORE IT!
-from utils.api_client import OpenF1Client
-from config.settings import config
-from datetime import datetime
-import logging
-import os
-import sys
+# ⚠️⚠️⚠️ YOUR AUTO-FORMAT IS CAUSING THE NameError! ⚠️⚠️⚠️
+# When you save, your IDE moves imports here, then restartPython() kills them!
+# Result: "NameError: name 'sys' is not defined"
+# FIX: Disable auto-format NOW! See DISABLE_AUTO_FORMAT.md
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# ✅ ALL imports go here (AFTER restart)
+# ✅ ALL imports MUST go here (AFTER restart)
+import sys
+import os
+import logging
+from datetime import datetime
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append(
-    '/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
+sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
 # Import our modules
+from config.settings import config
+from utils.api_client import OpenF1Client
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
