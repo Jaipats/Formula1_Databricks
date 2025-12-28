@@ -16,9 +16,10 @@
 
 # COMMAND ----------
 
-# ⚠️ STOP! DO NOT ADD ANY CODE OR IMPORTS BEFORE THE NEXT LINE! ⚠️
-# This cell MUST contain ONLY the restartPython() command
-# If your IDE adds imports here, DELETE THEM IMMEDIATELY!
+# ⚠️⚠️⚠️ STOP! YOUR IDE IS BREAKING THIS! ⚠️⚠️⚠️
+# EVERY TIME you save, your IDE moves imports here!
+# PLEASE TURN OFF AUTO-FORMAT for notebooks/*.py files!
+# restartPython() MUST BE ALONE - NO IMPORTS BEFORE IT!
 from utils.api_client import OpenF1Client
 from config.settings import config
 from datetime import datetime
@@ -29,7 +30,7 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# ✅ NOW we can import (after the Python kernel has restarted)
+# ✅ ALL imports go here (AFTER restart)
 
 # Add utils to path - UPDATE THIS PATH
 sys.path.append(
