@@ -21,13 +21,14 @@
 
 # COMMAND ----------
 
-# ⚠️ WARNING: DO NOT ADD IMPORTS BEFORE THIS LINE! ⚠️
-# restartPython() MUST be in its own cell with NO imports before it
+# ⚠️ STOP! DO NOT ADD ANY CODE OR IMPORTS BEFORE THE NEXT LINE! ⚠️
+# This cell MUST contain ONLY the restartPython() command
+# If your IDE adds imports here, DELETE THEM IMMEDIATELY!
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# ✅ NOW we can import (after restart)
+# ✅ NOW we can import (after the Python kernel has restarted)
 import sys
 import os
 import logging

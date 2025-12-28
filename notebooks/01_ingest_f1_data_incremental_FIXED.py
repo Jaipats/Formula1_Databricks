@@ -16,25 +16,25 @@
 
 # COMMAND ----------
 
-# ⚠️ WARNING: DO NOT ADD IMPORTS BEFORE THIS LINE! ⚠️
-# restartPython() MUST be in its own cell with NO imports before it
-from utils.api_client import OpenF1Client
-from config.settings import config
-from datetime import datetime
-import logging
-import os
-import sys
+# ⚠️ STOP! DO NOT ADD ANY CODE OR IMPORTS BEFORE THE NEXT LINE! ⚠️
+# This cell MUST contain ONLY the restartPython() command
+# If your IDE adds imports here, DELETE THEM IMMEDIATELY!
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# ✅ NOW we can import (after restart)
+# ✅ NOW we can import (after the Python kernel has restarted)
+import sys
+import os
+import logging
+from datetime import datetime
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append(
-    '/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
+sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
 # Import our modules
+from config.settings import config
+from utils.api_client import OpenF1Client
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
