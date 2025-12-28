@@ -21,24 +21,23 @@
 
 # COMMAND ----------
 
-from utils.volume_writer import SparkVolumeWriter
-from utils.data_fetcher import F1DataFetcher
-from utils.api_client import OpenF1Client
-from config.settings import config
-from pyspark.sql import functions as F
-from datetime import datetime
-import logging
-import os
-import sys
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
+import sys
+import os
+import logging
+from datetime import datetime
+from pyspark.sql import functions as F
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append(
-    '/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
+sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
+from config.settings import config
+from utils.api_client import OpenF1Client
+from utils.data_fetcher import F1DataFetcher
+from utils.volume_writer import SparkVolumeWriter
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

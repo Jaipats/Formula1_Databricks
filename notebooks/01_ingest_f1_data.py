@@ -10,26 +10,26 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install pyyaml requests
+# MAGIC %pip install pyyaml requests pandas
 
 # COMMAND ----------
 
-from utils.data_fetcher import F1DataFetcher
-from utils.api_client import OpenF1Client
-from config.settings import config
-from datetime import datetime
-import logging
-import os
-import sys
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
+import sys
+import os
+import logging
+from datetime import datetime
+from pyspark.sql import functions as F
 
-# Add utils to path
-# Update this path
+# Add utils to path - UPDATE THIS PATH
 sys.path.append('/Workspace/Repos/<your-username>/Formula1_Databricks')
 
+from config.settings import config
+from utils.api_client import OpenF1Client
+from utils.data_fetcher import F1DataFetcher
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
