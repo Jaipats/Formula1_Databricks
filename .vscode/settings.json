@@ -1,0 +1,27 @@
+{
+    // Disable ALL auto-formatting for this project
+    "editor.formatOnSave": false,
+    "editor.formatOnType": false,
+    "editor.formatOnPaste": false,
+    
+    // Disable Python-specific formatters
+    "[python]": {
+        "editor.formatOnSave": false,
+        "editor.formatOnType": false,
+        "editor.formatOnPaste": false,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": false
+        }
+    },
+    
+    // Disable import organization (this is what's moving your imports!)
+    "python.analysis.autoImportCompletions": false,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": false
+    },
+    
+    // Databricks notebook files - NO formatting!
+    "files.associations": {
+        "notebooks/*.py": "python"
+    }
+}
