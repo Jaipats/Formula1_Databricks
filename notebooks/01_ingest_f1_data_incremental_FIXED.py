@@ -16,7 +16,8 @@
 
 # COMMAND ----------
 
-# Restart Python to load newly installed packages
+# ⚠️ WARNING: DO NOT ADD IMPORTS BEFORE THIS LINE! ⚠️
+# restartPython() MUST be in its own cell with NO imports before it
 from utils.api_client import OpenF1Client
 from config.settings import config
 from datetime import datetime
@@ -27,7 +28,7 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# IMPORTANT: Imports MUST come AFTER restartPython()
+# ✅ NOW we can import (after restart)
 
 # Add utils to path - UPDATE THIS PATH
 sys.path.append(
