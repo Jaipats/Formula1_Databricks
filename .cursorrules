@@ -1,0 +1,42 @@
+# Cursor IDE Rules for Formula1 Databricks Project
+
+## ⚠️ CRITICAL: Do NOT Auto-Format Databricks Notebooks
+
+Files in the `notebooks/` folder are Databricks notebooks with special requirements.
+
+### Import Order Rule (CRITICAL!)
+
+In files matching `notebooks/*.py`:
+- `dbutils.library.restartPython()` MUST be in its own cell
+- NO imports are allowed before `restartPython()`
+- ALL imports must come AFTER `restartPython()`
+
+### Why?
+`restartPython()` terminates the Python kernel. Any imports before it will be lost,
+causing "Fatal error: The Python kernel is unresponsive" or NameError.
+
+### Correct Structure:
+```python
+# Cell 1
+%pip install pyyaml requests pandas
+
+# Cell 2 - ONLY restartPython()!
+dbutils.library.restartPython()
+
+# Cell 3 - NOW imports
+import sys
+from config.settings import config
+```
+
+### DO NOT:
+- Move imports to the top of the file
+- Apply PEP8 import ordering to these files
+- Auto-format these files
+
+### If Auto-Format Runs:
+Manually undo any changes that moved imports before `restartPython()`
+
+---
+
+This is a Databricks-specific requirement and cannot be changed.
+
