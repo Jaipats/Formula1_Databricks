@@ -19,22 +19,23 @@
 # ⚠️ STOP! DO NOT ADD ANY CODE OR IMPORTS BEFORE THE NEXT LINE! ⚠️
 # This cell MUST contain ONLY the restartPython() command
 # If your IDE adds imports here, DELETE THEM IMMEDIATELY!
+from utils.api_client import OpenF1Client
+from config.settings import config
+from datetime import datetime
+import logging
+import os
+import sys
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
 # ✅ NOW we can import (after the Python kernel has restarted)
-import sys
-import os
-import logging
-from datetime import datetime
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
+sys.path.append(
+    '/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
 # Import our modules
-from config.settings import config
-from utils.api_client import OpenF1Client
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
@@ -196,7 +197,8 @@ try:
         'team_radio': api_client.get_team_radio,
         'intervals': api_client.get_intervals,
         'overtakes': api_client.get_overtakes,
-        'session_result': api_client.get_session_result,  # Fixed: was get_session_results (plural)
+        # Fixed: was get_session_results (plural)
+        'session_result': api_client.get_session_result,
         'starting_grid': api_client.get_starting_grid,
     }
 

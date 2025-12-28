@@ -67,6 +67,36 @@ class PipelineConfig:
         return self.config['api']['rate_limit_delay']
 
     @property
+    def retry_attempts(self) -> int:
+        """Get number of retry attempts for API calls"""
+        return self.config['api'].get('retry_attempts', 5)
+
+    @property
+    def timeout(self) -> int:
+        """Get API request timeout in seconds"""
+        return self.config['api'].get('timeout', 30)
+
+    @property
+    def parallel_endpoints(self) -> bool:
+        """Get whether to enable parallel endpoint fetching"""
+        return self.config['api'].get('parallel_endpoints', False)
+
+    @property
+    def max_workers(self) -> int:
+        """Get max number of parallel workers"""
+        return self.config['api'].get('max_workers', 3)
+
+    @property
+    def batch_size(self) -> int:
+        """Get batch size for data processing"""
+        return self.config['data'].get('batch_size', 1000)
+
+    @property
+    def use_volume_staging(self) -> bool:
+        """Get whether to use volume staging for incremental writes"""
+        return self.config['data'].get('use_volume_staging', True)
+
+    @property
     def enabled_endpoints(self) -> Dict[str, bool]:
         """Get dictionary of enabled endpoints"""
         return self.config['endpoints']

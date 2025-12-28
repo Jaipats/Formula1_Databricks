@@ -21,29 +21,30 @@
 
 # COMMAND ----------
 
-# ⚠️⚠️⚠️ STOP! READ THIS! ⚠️⚠️⚠️
-# DO NOT ADD IMPORTS BEFORE restartPython()!
-# YOUR IDE KEEPS MOVING THEM - DELETE THEM IF IT DOES!
-# restartPython() MUST BE ALONE IN THIS CELL!
+# ⚠️⚠️⚠️ STOP! YOUR IDE IS BREAKING THIS! ⚠️⚠️⚠️
+# EVERY TIME you save, your IDE moves imports here!
+# PLEASE TURN OFF AUTO-FORMAT for notebooks/*.py files!
+# restartPython() MUST BE ALONE - NO IMPORTS BEFORE IT!
+from utils.volume_writer import SparkVolumeWriter
+from utils.data_fetcher import F1DataFetcher
+from utils.api_client import OpenF1Client
+from config.settings import config
+from pyspark.sql import functions as F
+from datetime import datetime
+import logging
+import os
+import sys
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# ✅ NOW imports go here (AFTER restart)
-import sys
-import os
-import logging
-from datetime import datetime
-from pyspark.sql import functions as F
+# ✅ ALL imports go here (AFTER restart)
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
+sys.path.append(
+    '/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
 # Import our modules (config.settings needs pyyaml which was just installed)
-from config.settings import config
-from utils.api_client import OpenF1Client
-from utils.data_fetcher import F1DataFetcher
-from utils.volume_writer import SparkVolumeWriter
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
