@@ -196,7 +196,7 @@ try:
         'team_radio': api_client.get_team_radio,
         'intervals': api_client.get_intervals,
         'overtakes': api_client.get_overtakes,
-        'session_result': api_client.get_session_results,
+        'session_result': api_client.get_session_result,  # Fixed: was get_session_results (plural)
         'starting_grid': api_client.get_starting_grid,
     }
 
