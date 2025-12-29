@@ -132,22 +132,22 @@ class OpenF1Client:
         """
         return self._make_request('meetings', {'year': year})
 
-    def get_sessions(self, year: int = None, meeting_key: int = None) -> List[Dict]:
+    def get_sessions(self, meeting_key: int = None, year: int = None) -> List[Dict]:
         """
         Get sessions
 
         Args:
-            year: Year to fetch
-            meeting_key: Specific meeting key
+            meeting_key: Specific meeting key (primary way to fetch sessions)
+            year: Year to fetch (alternative way)
 
         Returns:
             List of session records
         """
         params = {}
-        if year:
-            params['year'] = year
         if meeting_key:
             params['meeting_key'] = meeting_key
+        if year:
+            params['year'] = year
 
         return self._make_request('sessions', params)
 
