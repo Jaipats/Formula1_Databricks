@@ -10,14 +10,14 @@
         "editor.formatOnType": false,
         "editor.formatOnPaste": false,
         "editor.codeActionsOnSave": {
-            "source.organizeImports": false
+            "source.organizeImports": "never"
         }
     },
     
     // Disable import organization (this is what's moving your imports!)
     "python.analysis.autoImportCompletions": false,
     "editor.codeActionsOnSave": {
-        "source.organizeImports": false
+        "source.organizeImports": "never"
     },
     
     // Databricks notebook files - NO formatting!

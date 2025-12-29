@@ -75,7 +75,7 @@ databricks workspace ls /
 Use the provided deployment script:
 
 ```bash
-cd /Users/jaideep.patel/Cursor/Formula1
+cd /Users/jaideep.patel/Cursor/Formula1_Databricks
 
 # Set required environment variables
 export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
@@ -116,7 +116,7 @@ export DATABRICKS_USER="your.email@company.com"
 
 ```bash
 # Set your workspace path
-WORKSPACE_PATH="/Workspace/Users/your.email@company.com/Formula1"
+WORKSPACE_PATH="/Workspace/Users/your.email@company.com/Formula1_Databricks"
 
 # Create directories
 databricks workspace mkdirs "$WORKSPACE_PATH"
@@ -192,7 +192,7 @@ cat > /tmp/ingestion_job.json << 'EOF'
   "tasks": [{
     "task_key": "ingest_f1_data",
     "notebook_task": {
-      "notebook_path": "/Workspace/Users/your.email@company.com/Formula1/notebooks/01_ingest_f1_data",
+      "notebook_path": "/Workspace/Users/your.email@company.com/Formula1_Databricks/notebooks/01_ingest_f1_data",
       "source": "WORKSPACE"
     },
     "new_cluster": {
@@ -386,7 +386,7 @@ databricks configure --token
 
 ```bash
 # Check if file exists
-databricks workspace ls /Workspace/Users/your.email@company.com/Formula1/
+databricks workspace ls /Workspace/Users/your.email@company.com/Formula1_Databricks/
 
 # Force overwrite
 databricks workspace import file.py /path/to/file --overwrite --language PYTHON

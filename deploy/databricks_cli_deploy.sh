@@ -72,7 +72,7 @@ fi
 echo -e "${GREEN}✓ Databricks user: ${DATABRICKS_USER}${NC}"
 
 # Set workspace path using the detected user
-WORKSPACE_PATH="/Workspace/Users/${DATABRICKS_USER}/Formula1"
+WORKSPACE_PATH="/Workspace/Users/${DATABRICKS_USER}/Formula1_Databricks"
 echo -e "${GREEN}✓ Workspace path: ${WORKSPACE_PATH}${NC}"
 echo ""
 

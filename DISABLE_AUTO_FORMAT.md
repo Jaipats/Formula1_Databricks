@@ -101,7 +101,7 @@ If imports are before `restartPython()`, manually move them AFTER it.
 Create a `.editorconfig` file in your project root:
 
 ```ini
-# EditorConfig for Formula1 project
+# EditorConfig for Formula1_Databricks project
 root = true
 
 [*]

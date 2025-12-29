@@ -20,7 +20,7 @@ You have two options:
 #### Option A: Use Databricks CLI (Automated)
 
 ```bash
-cd /Users/jaideep.patel/Cursor/Formula1
+cd /Users/jaideep.patel/Cursor/Formula1_Databricks
 
 # Make sure you're logged in to Databricks CLI
 databricks auth login --host https://YOUR_WORKSPACE.cloud.databricks.com
