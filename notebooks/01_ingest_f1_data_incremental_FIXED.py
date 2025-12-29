@@ -31,7 +31,7 @@ import logging
 from datetime import datetime
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
+sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1')
 
 # Import our modules
 from config.settings import config

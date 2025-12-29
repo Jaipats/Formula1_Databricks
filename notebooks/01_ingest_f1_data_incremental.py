@@ -41,8 +41,7 @@ dbutils.library.restartPython()
 # ✅ ALL imports go here (AFTER restart)
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append(
-    '/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
+sys.path.append('/Workspace/Users/jaideep.patel@databricks.com/Formula1_Databricks')
 
 # Import our modules (config.settings needs pyyaml which was just installed)
 

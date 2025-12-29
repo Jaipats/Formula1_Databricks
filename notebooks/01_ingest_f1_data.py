@@ -30,7 +30,7 @@ from datetime import datetime
 from pyspark.sql import functions as F
 
 # Add utils to path - UPDATE THIS PATH
-sys.path.append('/Workspace/Repos/<your-username>/Formula1_Databricks')
+sys.path.append('/Workspace/Repos/<your-username>/Formula1')
 
 # Import our modules (config.settings needs pyyaml which was just installed)
 from config.settings import config
