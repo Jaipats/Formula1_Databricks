@@ -29,7 +29,7 @@ catalog = spark.conf.get("catalog", "jai_patel_f1_data")
 schema = spark.conf.get("schema", "racing_stats")
 
 # Volume base path
-volume_base_path = f"/Volumes/{catalog}/{schema}/pipeline_storage/staging"
+volume_base_path = f"/Volumes/{catalog}/{schema}/raw_data"
 
 # COMMAND ----------
 
@@ -58,7 +58,7 @@ def bronze_meetings():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/meetings")
         .load(f"{volume_base_path}/meetings/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -81,7 +81,7 @@ def bronze_sessions():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/sessions")
         .load(f"{volume_base_path}/sessions/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -104,7 +104,7 @@ def bronze_drivers():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/drivers")
         .load(f"{volume_base_path}/drivers/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -127,7 +127,7 @@ def bronze_laps():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/laps")
         .load(f"{volume_base_path}/laps/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -150,7 +150,7 @@ def bronze_pit():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/pit")
         .load(f"{volume_base_path}/pit/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -173,54 +173,54 @@ def bronze_stints():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/stints")
         .load(f"{volume_base_path}/stints/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
 
-@dp.table(
-    name="bronze_car_data",
-    comment="Raw F1 car telemetry data from OpenF1 API",
-    table_properties={
-        "quality": "bronze",
-        "pipelines.autoOptimize.managed": "true"
-    }
-)
-def bronze_car_data():
-    return (
-        spark.readStream
-        .format("cloudFiles")
-        .option("cloudFiles.format", "json")
-        .option("cloudFiles.inferColumnTypes", "true")
-        .option("cloudFiles.schemaHints", "session_key int, driver_number int, speed int, rpm int")
-        .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/car_data")
-        .load(f"{volume_base_path}/car_data/")
-        .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
-    )
+# @dp.table(
+#     name="bronze_car_data",
+#     comment="Raw F1 car telemetry data from OpenF1 API",
+#     table_properties={
+#         "quality": "bronze",
+#         "pipelines.autoOptimize.managed": "true"
+#     }
+# )
+# def bronze_car_data():
+#     return (
+#         spark.readStream
+#         .format("cloudFiles")
+#         .option("cloudFiles.format", "json")
+#         .option("cloudFiles.inferColumnTypes", "true")
+#         .option("cloudFiles.schemaHints", "session_key int, driver_number int, speed int, rpm int")
+#         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/car_data")
+#         .load(f"{volume_base_path}/car_data/")
+#         .withColumn("_ingestion_timestamp", F.current_timestamp())
+#         .withColumn("_source_file", F.col("_metadata.file_path"))
+#     )
 
 # COMMAND ----------
 
-@dp.table(
-    name="bronze_position",
-    comment="Raw F1 driver position data from OpenF1 API",
-    table_properties={
-        "quality": "bronze",
-        "pipelines.autoOptimize.managed": "true"
-    }
-)
-def bronze_position():
-    return (
-        spark.readStream
-        .format("cloudFiles")
-        .option("cloudFiles.format", "json")
-        .option("cloudFiles.inferColumnTypes", "true")
-        .option("cloudFiles.schemaHints", "session_key int, driver_number int, position int")
-        .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/position")
-        .load(f"{volume_base_path}/position/")
-        .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
-    )
+# @dp.table(
+#     name="bronze_position",
+#     comment="Raw F1 driver position data from OpenF1 API",
+#     table_properties={
+#         "quality": "bronze",
+#         "pipelines.autoOptimize.managed": "true"
+#     }
+# )
+# def bronze_position():
+#     return (
+#         spark.readStream
+#         .format("cloudFiles")
+#         .option("cloudFiles.format", "json")
+#         .option("cloudFiles.inferColumnTypes", "true")
+#         .option("cloudFiles.schemaHints", "session_key int, driver_number int, position int")
+#         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/position")
+#         .load(f"{volume_base_path}/position/")
+#         .withColumn("_ingestion_timestamp", F.current_timestamp())
+#         .withColumn("_source_file", F.col("_metadata.file_path"))
+#     )
 
 # COMMAND ----------
 
@@ -242,7 +242,7 @@ def bronze_weather():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/weather")
         .load(f"{volume_base_path}/weather/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -265,7 +265,7 @@ def bronze_race_control():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/race_control")
         .load(f"{volume_base_path}/race_control/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -288,7 +288,7 @@ def bronze_team_radio():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/team_radio")
         .load(f"{volume_base_path}/team_radio/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -311,7 +311,7 @@ def bronze_intervals():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/intervals")
         .load(f"{volume_base_path}/intervals/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -333,7 +333,7 @@ def bronze_overtakes():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/overtakes")
         .load(f"{volume_base_path}/overtakes/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -355,7 +355,7 @@ def bronze_session_result():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/session_result")
         .load(f"{volume_base_path}/session_result/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 # COMMAND ----------
@@ -377,6 +377,6 @@ def bronze_starting_grid():
         .option("cloudFiles.schemaLocation", f"{volume_base_path}/_schemas/starting_grid")
         .load(f"{volume_base_path}/starting_grid/")
         .withColumn("_ingestion_timestamp", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 

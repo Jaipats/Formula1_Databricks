@@ -1,7 +1,7 @@
 -- Databricks notebook source
 -- MAGIC %md
 -- MAGIC # Formula 1 Race Analytics Dashboard
--- MAGIC 
+-- MAGIC
 -- MAGIC This SQL notebook contains queries for the F1 analytics dashboard.
 -- MAGIC Use Databricks SQL to create visualizations from these queries.
 
@@ -13,8 +13,8 @@
 
 -- COMMAND ----------
 
-SET catalog = 'jai_patel_f1_data';
-SET schema = 'racing_stats';
+USE catalog jai_patel_f1_data;
+USE schema racing_stats;
 
 -- COMMAND ----------
 
@@ -31,10 +31,10 @@ SELECT
   s.session_type,
   m.meeting_name,
   COUNT(DISTINCT d.driver_number) as drivers_count
-FROM ${catalog}.${schema}.silver_sessions s
-JOIN ${catalog}.${schema}.silver_meetings m 
+FROM silver_sessions s
+JOIN silver_meetings m 
   ON s.meeting_key = m.meeting_key
-LEFT JOIN ${catalog}.${schema}.silver_drivers d 
+LEFT JOIN silver_drivers d 
   ON s.session_key = d.session_key
 GROUP BY ALL
 ORDER BY s.date_start DESC
@@ -56,7 +56,7 @@ SELECT
   lap_number,
   ROUND(fastest_lap_time, 3) as lap_time_seconds,
   date_start
-FROM ${catalog}.${schema}.gold_fastest_laps
+FROM gold_fastest_laps
 WHERE date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
 ORDER BY date_start DESC, rank
 LIMIT 50;
@@ -80,8 +80,8 @@ SELECT
   dp.pit_stop_count,
   ROUND(dp.avg_pit_duration, 2) as avg_pit_duration,
   dp.max_speed_st as max_speed_kmh
-FROM ${catalog}.${schema}.gold_driver_performance dp
-JOIN ${catalog}.${schema}.silver_sessions s 
+FROM gold_driver_performance dp
+JOIN silver_sessions s 
   ON dp.session_key = s.session_key
 WHERE s.session_type IN ('Race', 'Sprint')
   AND s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
@@ -103,8 +103,8 @@ SELECT
   tp.total_team_pit_stops,
   ROUND(tp.team_avg_pit_duration, 2) as avg_pit_duration,
   tp.team_max_speed
-FROM ${catalog}.${schema}.gold_team_performance tp
-JOIN ${catalog}.${schema}.silver_sessions s 
+FROM gold_team_performance tp
+JOIN silver_sessions s 
   ON tp.session_key = s.session_key
 WHERE s.session_type IN ('Race', 'Sprint')
   AND s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
@@ -128,8 +128,8 @@ SELECT
   ts.tyre_age_at_start,
   ROUND(ts.avg_lap_time_on_compound, 3) as avg_lap_time,
   ROUND(ts.best_lap_time_on_compound, 3) as best_lap_time
-FROM ${catalog}.${schema}.gold_tyre_strategy ts
-JOIN ${catalog}.${schema}.silver_sessions s 
+FROM gold_tyre_strategy ts
+JOIN silver_sessions s 
   ON ts.session_key = s.session_key
 WHERE s.session_type IN ('Race', 'Sprint')
   AND s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
@@ -152,10 +152,10 @@ SELECT
   MAX(w.rainfall) as rain_detected,
   ROUND(AVG(w.wind_speed), 1) as avg_wind_speed_ms,
   ROUND(MIN(l.lap_duration), 3) as fastest_lap_in_conditions
-FROM ${catalog}.${schema}.silver_weather w
-JOIN ${catalog}.${schema}.silver_sessions s 
+FROM silver_weather w
+JOIN silver_sessions s 
   ON w.session_key = s.session_key
-LEFT JOIN ${catalog}.${schema}.silver_laps l 
+LEFT JOIN silver_laps l 
   ON w.session_key = l.session_key
 WHERE s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
 GROUP BY ALL
@@ -177,10 +177,10 @@ SELECT
   rc.message,
   rc.lap_number,
   d.full_name as driver_affected
-FROM ${catalog}.${schema}.silver_race_control rc
-JOIN ${catalog}.${schema}.silver_sessions s 
+FROM silver_race_control rc
+JOIN silver_sessions s 
   ON rc.session_key = s.session_key
-LEFT JOIN ${catalog}.${schema}.silver_drivers d 
+LEFT JOIN silver_drivers d 
   ON rc.session_key = d.session_key 
   AND rc.driver_number = d.driver_number
 WHERE s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
@@ -203,10 +203,10 @@ SELECT
   p.lap_number,
   ROUND(p.pit_duration, 2) as pit_duration_seconds,
   p.date as pit_time
-FROM ${catalog}.${schema}.silver_pit p
-JOIN ${catalog}.${schema}.silver_sessions s 
+FROM silver_pit p
+JOIN silver_sessions s 
   ON p.session_key = s.session_key
-JOIN ${catalog}.${schema}.silver_drivers d 
+JOIN silver_drivers d 
   ON p.session_key = d.session_key 
   AND p.driver_number = d.driver_number
 WHERE s.session_type IN ('Race', 'Sprint')
@@ -222,24 +222,24 @@ LIMIT 50;
 
 -- COMMAND ----------
 
-SELECT 
-  s.location,
-  s.session_name,
-  d.full_name as driver,
-  d.team_name,
-  MAX(cd.speed) as max_speed_kmh,
-  MAX(cd.rpm) as max_rpm,
-  AVG(cd.speed) as avg_speed_kmh
-FROM ${catalog}.${schema}.silver_car_data cd
-JOIN ${catalog}.${schema}.silver_sessions s 
-  ON cd.session_key = s.session_key
-JOIN ${catalog}.${schema}.silver_drivers d 
-  ON cd.session_key = d.session_key 
-  AND cd.driver_number = d.driver_number
-WHERE s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
-GROUP BY ALL
-ORDER BY max_speed_kmh DESC
-LIMIT 50;
+-- SELECT 
+--   s.location,
+--   s.session_name,
+--   d.full_name as driver,
+--   d.team_name,
+--   MAX(cd.speed) as max_speed_kmh,
+--   MAX(cd.rpm) as max_rpm,
+--   AVG(cd.speed) as avg_speed_kmh
+-- FROM silver_car_data cd
+-- JOIN silver_sessions s 
+--   ON cd.session_key = s.session_key
+-- JOIN silver_drivers d 
+--   ON cd.session_key = d.session_key 
+--   AND cd.driver_number = d.driver_number
+-- WHERE s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
+-- GROUP BY ALL
+-- ORDER BY max_speed_kmh DESC
+-- LIMIT 50;
 
 -- COMMAND ----------
 
@@ -254,8 +254,8 @@ SELECT
   oa.full_name as driver,
   oa.team_name,
   oa.overtakes_made
-FROM ${catalog}.${schema}.gold_overtakes_analysis oa
-JOIN ${catalog}.${schema}.silver_sessions s 
+FROM gold_overtakes_analysis oa
+JOIN silver_sessions s 
   ON oa.session_key = s.session_key
 WHERE s.session_type IN ('Race', 'Sprint')
   AND s.date_start >= CURRENT_DATE() - INTERVAL '90' DAYS
@@ -282,7 +282,7 @@ SELECT
   ROUND(rs.avg_air_temp, 1) as avg_air_temp_c,
   ROUND(rs.avg_track_temp, 1) as avg_track_temp_c,
   CASE WHEN rs.rainfall_detected > 0 THEN 'Yes' ELSE 'No' END as rain
-FROM ${catalog}.${schema}.gold_race_summary rs
+FROM gold_race_summary rs
 ORDER BY rs.date_start DESC
 LIMIT 20;
 
@@ -308,10 +308,10 @@ WITH race_positions AS (
       PARTITION BY s.session_key, d.driver_number 
       ORDER BY pos.date DESC
     ) as final_position
-  FROM ${catalog}.${schema}.silver_sessions s
-  JOIN ${catalog}.${schema}.silver_drivers d 
+  FROM silver_sessions s
+  JOIN silver_drivers d 
     ON s.session_key = d.session_key
-  JOIN ${catalog}.${schema}.silver_position pos 
+  JOIN silver_position pos 
     ON s.session_key = pos.session_key 
     AND d.driver_number = pos.driver_number
   WHERE s.session_type = 'Race'

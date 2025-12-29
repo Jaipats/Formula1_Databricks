@@ -252,33 +252,33 @@ def silver_stints():
 # COMMAND ----------
 
 
-@dp.table(
-    name="silver_car_data",
-    comment="F1 car telemetry data (speed, throttle, brake, RPM, gear)",
-    table_properties={
-        "quality": "silver",
-        "pipelines.autoOptimize.zOrderCols": "session_key,driver_number,date"
-    }
-)
-@dp.expect("valid_speed", "speed >= 0 AND speed <= 400")
-@dp.expect("valid_rpm", "rpm >= 0 AND rpm <= 15000")
-def silver_car_data():
-    return (
-        dp.read(f"{catalog}.{schema}.bronze_car_data")
-        .select(
-            F.col("session_key").cast(IntegerType()),
-            F.col("meeting_key").cast(IntegerType()),
-            F.col("driver_number").cast(IntegerType()),
-            F.col("date").cast(TimestampType()),
-            F.col("speed").cast(IntegerType()),
-            F.col("rpm").cast(IntegerType()),
-            F.col("n_gear").cast(IntegerType()),
-            F.col("throttle").cast(IntegerType()),
-            F.col("brake").cast(IntegerType()),
-            F.col("drs").cast(IntegerType()),
-            F.current_timestamp().alias("_processed_timestamp")
-        )
-    )
+# @dp.table(
+#     name="silver_car_data",
+#     comment="F1 car telemetry data (speed, throttle, brake, RPM, gear)",
+#     table_properties={
+#         "quality": "silver",
+#         "pipelines.autoOptimize.zOrderCols": "session_key,driver_number,date"
+#     }
+# )
+# @dp.expect("valid_speed", "speed >= 0 AND speed <= 400")
+# @dp.expect("valid_rpm", "rpm >= 0 AND rpm <= 15000")
+# def silver_car_data():
+#     return (
+#         dp.read(f"{catalog}.{schema}.bronze_car_data")
+#         .select(
+#             F.col("session_key").cast(IntegerType()),
+#             F.col("meeting_key").cast(IntegerType()),
+#             F.col("driver_number").cast(IntegerType()),
+#             F.col("date").cast(TimestampType()),
+#             F.col("speed").cast(IntegerType()),
+#             F.col("rpm").cast(IntegerType()),
+#             F.col("n_gear").cast(IntegerType()),
+#             F.col("throttle").cast(IntegerType()),
+#             F.col("brake").cast(IntegerType()),
+#             F.col("drs").cast(IntegerType()),
+#             F.current_timestamp().alias("_processed_timestamp")
+#         )
+#     )
 
 # COMMAND ----------
 
@@ -288,26 +288,26 @@ def silver_car_data():
 # COMMAND ----------
 
 
-@dp.table(
-    name="silver_position",
-    comment="F1 driver position throughout session",
-    table_properties={
-        "quality": "silver",
-        "pipelines.autoOptimize.zOrderCols": "session_key,driver_number,date"
-    }
-)
-def silver_position():
-    return (
-        dp.read(f"{catalog}.{schema}.bronze_position")
-        .select(
-            F.col("session_key").cast(IntegerType()),
-            F.col("meeting_key").cast(IntegerType()),
-            F.col("driver_number").cast(IntegerType()),
-            F.col("date").cast(TimestampType()),
-            F.col("position").cast(IntegerType()),
-            F.current_timestamp().alias("_processed_timestamp")
-        )
-    )
+# @dp.table(
+#     name="silver_position",
+#     comment="F1 driver position throughout session",
+#     table_properties={
+#         "quality": "silver",
+#         "pipelines.autoOptimize.zOrderCols": "session_key,driver_number,date"
+#     }
+# )
+# def silver_position():
+#     return (
+#         dp.read(f"{catalog}.{schema}.bronze_position")
+#         .select(
+#             F.col("session_key").cast(IntegerType()),
+#             F.col("meeting_key").cast(IntegerType()),
+#             F.col("driver_number").cast(IntegerType()),
+#             F.col("date").cast(TimestampType()),
+#             F.col("position").cast(IntegerType()),
+#             F.current_timestamp().alias("_processed_timestamp")
+#         )
+#     )
 
 # COMMAND ----------
 

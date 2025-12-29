@@ -12,8 +12,8 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 # Configuration - Update these with your Databricks settings
-DATABRICKS_SERVER_HOSTNAME = os.getenv("DATABRICKS_SERVER_HOSTNAME", "<workspace>.cloud.databricks.com")
-DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH", "/sql/1.0/warehouses/<warehouse-id>")
+DATABRICKS_SERVER_HOSTNAME = os.getenv("DATABRICKS_SERVER_HOSTNAME", "e2-demo-field-eng.cloud.databricks.com/.cloud.databricks.com")
+DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH", "/sql/1.0/warehouses/4b9b953939869799")
 DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN")  # Set via environment variable
 
 # Unity Catalog Configuration - Make this configurable

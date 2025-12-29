@@ -1,9 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # F1 Data Pipeline - Gold Layer (Lakeflow)
-# MAGIC 
+# MAGIC
 # MAGIC This Lakeflow Spark Declarative Pipeline creates aggregated, business-ready tables.
-# MAGIC 
+# MAGIC
 # MAGIC **Gold Layer:** Aggregated metrics and analytics-ready tables for:
 # MAGIC - Driver performance statistics
 # MAGIC - Race summaries
@@ -387,27 +387,33 @@ def gold_overtakes_analysis():
     overtakes = dp.read(f"{catalog}.{schema}.silver_overtakes")
     drivers = dp.read(f"{catalog}.{schema}.silver_drivers")
     
-    # Count overtakes made and received
     overtakes_made = (
         overtakes
-        .groupBy("session_key", "driver_number")
+        .groupBy("session_key", "meeting_key", "overtaking_driver_number")
         .agg(F.count("*").alias("overtakes_made"))
     )
     
     return (
         overtakes_made
         .join(
-            drivers.select("session_key", "driver_number", "full_name", "team_name"),
-            ["session_key", "driver_number"],
+            drivers.select(
+                F.col("session_key").alias("drv_session_key"),
+                F.col("driver_number"),
+                F.col("meeting_key").alias("drv_meeting_key"),
+                "full_name",
+                "team_name"
+            ),
+            (overtakes_made.session_key == F.col("drv_session_key")) &
+            (overtakes_made.meeting_key == F.col("drv_meeting_key")) &
+            (overtakes_made.overtaking_driver_number == drivers.driver_number),
             "left"
         )
         .select(
-            "session_key",
-            "driver_number",
+            overtakes_made.session_key,
+            overtakes_made.overtaking_driver_number.alias("driver_number"),
             "full_name",
             "team_name",
             "overtakes_made",
             F.current_timestamp().alias("_processed_timestamp")
         )
     )
-
