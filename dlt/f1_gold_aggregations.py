@@ -1,8 +1,8 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # F1 Data Pipeline - Gold Layer (DLT)
+# MAGIC # F1 Data Pipeline - Gold Layer (Lakeflow)
 # MAGIC 
-# MAGIC This Delta Live Tables pipeline creates aggregated, business-ready tables.
+# MAGIC This Lakeflow Spark Declarative Pipeline creates aggregated, business-ready tables.
 # MAGIC 
 # MAGIC **Gold Layer:** Aggregated metrics and analytics-ready tables for:
 # MAGIC - Driver performance statistics
@@ -12,7 +12,7 @@
 
 # COMMAND ----------
 
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 
@@ -27,7 +27,7 @@ schema = spark.conf.get("schema", "racing_stats")
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="gold_driver_performance",
     comment="Aggregated driver performance metrics per session",
     table_properties={
@@ -44,9 +44,9 @@ def gold_driver_performance():
     - Average speed
     - Position gained/lost
     """
-    laps = dlt.read(f"{catalog}.{schema}.silver_laps")
-    drivers = dlt.read(f"{catalog}.{schema}.silver_drivers")
-    pit_stops = dlt.read(f"{catalog}.{schema}.silver_pit")
+    laps = dp.read(f"{catalog}.{schema}.silver_laps")
+    drivers = dp.read(f"{catalog}.{schema}.silver_drivers")
+    pit_stops = dp.read(f"{catalog}.{schema}.silver_pit")
     
     # Aggregate lap statistics
     lap_stats = (
@@ -107,7 +107,7 @@ def gold_driver_performance():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="gold_race_summary",
     comment="Race session summary with key statistics",
     table_properties={
@@ -123,10 +123,10 @@ def gold_race_summary():
     - Weather conditions
     - Race control incidents
     """
-    sessions = dlt.read(f"{catalog}.{schema}.silver_sessions")
-    laps = dlt.read(f"{catalog}.{schema}.silver_laps")
-    race_control = dlt.read(f"{catalog}.{schema}.silver_race_control")
-    weather = dlt.read(f"{catalog}.{schema}.silver_weather")
+    sessions = dp.read(f"{catalog}.{schema}.silver_sessions")
+    laps = dp.read(f"{catalog}.{schema}.silver_laps")
+    race_control = dp.read(f"{catalog}.{schema}.silver_race_control")
+    weather = dp.read(f"{catalog}.{schema}.silver_weather")
     
     # Filter for race sessions
     race_sessions = sessions.filter(
@@ -200,7 +200,7 @@ def gold_race_summary():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="gold_team_performance",
     comment="Team performance metrics per session",
     table_properties={
@@ -211,7 +211,7 @@ def gold_team_performance():
     """
     Aggregate team-level performance metrics
     """
-    driver_perf = dlt.read(f"{catalog}.{schema}.gold_driver_performance")
+    driver_perf = dp.read(f"{catalog}.{schema}.gold_driver_performance")
     
     return (
         driver_perf
@@ -234,7 +234,7 @@ def gold_team_performance():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="gold_tyre_strategy",
     comment="Tyre compound usage and performance analysis",
     table_properties={
@@ -245,9 +245,9 @@ def gold_tyre_strategy():
     """
     Analyze tyre strategies and performance by compound
     """
-    stints = dlt.read(f"{catalog}.{schema}.silver_stints")
-    laps = dlt.read(f"{catalog}.{schema}.silver_laps")
-    drivers = dlt.read(f"{catalog}.{schema}.silver_drivers")
+    stints = dp.read(f"{catalog}.{schema}.silver_stints")
+    laps = dp.read(f"{catalog}.{schema}.silver_laps")
+    drivers = dp.read(f"{catalog}.{schema}.silver_drivers")
     
     # Calculate stint length
     stint_analysis = (
@@ -312,7 +312,7 @@ def gold_tyre_strategy():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="gold_fastest_laps",
     comment="Fastest lap rankings per session",
     table_properties={
@@ -323,9 +323,9 @@ def gold_fastest_laps():
     """
     Rank drivers by fastest lap time per session
     """
-    laps = dlt.read(f"{catalog}.{schema}.silver_laps")
-    drivers = dlt.read(f"{catalog}.{schema}.silver_drivers")
-    sessions = dlt.read(f"{catalog}.{schema}.silver_sessions")
+    laps = dp.read(f"{catalog}.{schema}.silver_laps")
+    drivers = dp.read(f"{catalog}.{schema}.silver_drivers")
+    sessions = dp.read(f"{catalog}.{schema}.silver_sessions")
     
     # Find fastest lap per driver per session
     fastest_laps = (
@@ -373,7 +373,7 @@ def gold_fastest_laps():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="gold_overtakes_analysis",
     comment="Overtake statistics per driver and session",
     table_properties={
@@ -384,8 +384,8 @@ def gold_overtakes_analysis():
     """
     Analyze overtaking statistics
     """
-    overtakes = dlt.read(f"{catalog}.{schema}.silver_overtakes")
-    drivers = dlt.read(f"{catalog}.{schema}.silver_drivers")
+    overtakes = dp.read(f"{catalog}.{schema}.silver_overtakes")
+    drivers = dp.read(f"{catalog}.{schema}.silver_drivers")
     
     # Count overtakes made and received
     overtakes_made = (

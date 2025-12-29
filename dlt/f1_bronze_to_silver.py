@@ -1,8 +1,8 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # F1 Data Pipeline - Bronze to Silver (DLT)
+# MAGIC # F1 Data Pipeline - Bronze to Silver (Lakeflow)
 # MAGIC
-# MAGIC This Delta Live Tables (DLT) pipeline transforms raw F1 data from bronze to silver tables.
+# MAGIC This Lakeflow Spark Declarative Pipeline transforms raw F1 data from bronze to silver tables.
 # MAGIC
 # MAGIC **Bronze Layer:** Raw data from OpenF1 API
 # MAGIC **Silver Layer:** Cleaned, validated, and transformed data with proper types
@@ -13,7 +13,7 @@
 
 # COMMAND ----------
 
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 from pyspark.sql.types import *
 
@@ -29,7 +29,7 @@ schema = spark.conf.get("schema", "racing_stats")
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_meetings",
     comment="Cleaned F1 race weekend meetings data",
     table_properties={
@@ -37,11 +37,11 @@ schema = spark.conf.get("schema", "racing_stats")
         "pipelines.autoOptimize.zOrderCols": "meeting_key,year"
     }
 )
-@dlt.expect_or_drop("valid_meeting_key", "meeting_key IS NOT NULL")
-@dlt.expect_or_drop("valid_year", "year >= 2018 AND year <= 2030")
+@dp.expect_or_drop("valid_meeting_key", "meeting_key IS NOT NULL")
+@dp.expect_or_drop("valid_year", "year >= 2018 AND year <= 2030")
 def silver_meetings():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_meetings")
+        dp.read(f"{catalog}.{schema}.bronze_meetings")
         .select(
             F.col("meeting_key").cast(IntegerType()),
             F.col("meeting_name").cast(StringType()),
@@ -67,7 +67,7 @@ def silver_meetings():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_sessions",
     comment="Cleaned F1 session data (Practice, Qualifying, Race, Sprint)",
     table_properties={
@@ -75,11 +75,11 @@ def silver_meetings():
         "pipelines.autoOptimize.zOrderCols": "session_key,meeting_key"
     }
 )
-@dlt.expect_or_drop("valid_session_key", "session_key IS NOT NULL")
-@dlt.expect_or_drop("valid_meeting_key", "meeting_key IS NOT NULL")
+@dp.expect_or_drop("valid_session_key", "session_key IS NOT NULL")
+@dp.expect_or_drop("valid_meeting_key", "meeting_key IS NOT NULL")
 def silver_sessions():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_sessions")
+        dp.read(f"{catalog}.{schema}.bronze_sessions")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("session_name").cast(StringType()),
@@ -107,7 +107,7 @@ def silver_sessions():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_drivers",
     comment="F1 drivers information per session",
     table_properties={
@@ -115,10 +115,10 @@ def silver_sessions():
         "pipelines.autoOptimize.zOrderCols": "driver_number,session_key"
     }
 )
-@dlt.expect_or_drop("valid_driver_number", "driver_number IS NOT NULL")
+@dp.expect_or_drop("valid_driver_number", "driver_number IS NOT NULL")
 def silver_drivers():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_drivers")
+        dp.read(f"{catalog}.{schema}.bronze_drivers")
         .select(
             F.col("driver_number").cast(IntegerType()),
             F.col("broadcast_name").cast(StringType()),
@@ -145,7 +145,7 @@ def silver_drivers():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_laps",
     comment="F1 lap timing data",
     table_properties={
@@ -153,11 +153,11 @@ def silver_drivers():
         "pipelines.autoOptimize.zOrderCols": "session_key,driver_number,lap_number"
     }
 )
-@dlt.expect_or_drop("valid_lap", "lap_number IS NOT NULL AND lap_number > 0")
-@dlt.expect_or_drop("valid_duration", "lap_duration IS NULL OR lap_duration > 0")
+@dp.expect_or_drop("valid_lap", "lap_number IS NOT NULL AND lap_number > 0")
+@dp.expect_or_drop("valid_duration", "lap_duration IS NULL OR lap_duration > 0")
 def silver_laps():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_laps")
+        dp.read(f"{catalog}.{schema}.bronze_laps")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -188,7 +188,7 @@ def silver_laps():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_pit",
     comment="F1 pit stop data",
     table_properties={
@@ -198,7 +198,7 @@ def silver_laps():
 )
 def silver_pit():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_pit")
+        dp.read(f"{catalog}.{schema}.bronze_pit")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -219,7 +219,7 @@ def silver_pit():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_stints",
     comment="F1 tyre stint data",
     table_properties={
@@ -229,7 +229,7 @@ def silver_pit():
 )
 def silver_stints():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_stints")
+        dp.read(f"{catalog}.{schema}.bronze_stints")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -252,7 +252,7 @@ def silver_stints():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_car_data",
     comment="F1 car telemetry data (speed, throttle, brake, RPM, gear)",
     table_properties={
@@ -260,11 +260,11 @@ def silver_stints():
         "pipelines.autoOptimize.zOrderCols": "session_key,driver_number,date"
     }
 )
-@dlt.expect("valid_speed", "speed >= 0 AND speed <= 400")
-@dlt.expect("valid_rpm", "rpm >= 0 AND rpm <= 15000")
+@dp.expect("valid_speed", "speed >= 0 AND speed <= 400")
+@dp.expect("valid_rpm", "rpm >= 0 AND rpm <= 15000")
 def silver_car_data():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_car_data")
+        dp.read(f"{catalog}.{schema}.bronze_car_data")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -288,7 +288,7 @@ def silver_car_data():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_position",
     comment="F1 driver position throughout session",
     table_properties={
@@ -298,7 +298,7 @@ def silver_car_data():
 )
 def silver_position():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_position")
+        dp.read(f"{catalog}.{schema}.bronze_position")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -317,7 +317,7 @@ def silver_position():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_weather",
     comment="F1 track weather conditions",
     table_properties={
@@ -327,7 +327,7 @@ def silver_position():
 )
 def silver_weather():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_weather")
+        dp.read(f"{catalog}.{schema}.bronze_weather")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -352,7 +352,7 @@ def silver_weather():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_race_control",
     comment="F1 race control messages and flags",
     table_properties={
@@ -362,7 +362,7 @@ def silver_weather():
 )
 def silver_race_control():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_race_control")
+        dp.read(f"{catalog}.{schema}.bronze_race_control")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -386,7 +386,7 @@ def silver_race_control():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_team_radio",
     comment="F1 team radio communications",
     table_properties={
@@ -396,7 +396,7 @@ def silver_race_control():
 )
 def silver_team_radio():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_team_radio")
+        dp.read(f"{catalog}.{schema}.bronze_team_radio")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -415,14 +415,14 @@ def silver_team_radio():
 # COMMAND ----------
 
 
-@dlt.table(
+@dp.table(
     name="silver_intervals",
     comment="F1 time intervals between drivers",
     table_properties={"quality": "silver"}
 )
 def silver_intervals():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_intervals")
+        dp.read(f"{catalog}.{schema}.bronze_intervals")
         .select(
             F.col("session_key").cast(IntegerType()),
             F.col("meeting_key").cast(IntegerType()),
@@ -435,37 +435,37 @@ def silver_intervals():
     )
 
 
-@dlt.table(
+@dp.table(
     name="silver_overtakes",
     comment="F1 overtake events",
     table_properties={"quality": "silver"}
 )
 def silver_overtakes():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_overtakes")
+        dp.read(f"{catalog}.{schema}.bronze_overtakes")
         .withColumn("_processed_timestamp", F.current_timestamp())
     )
 
 
-@dlt.table(
+@dp.table(
     name="silver_session_result",
     comment="F1 session final results",
     table_properties={"quality": "silver"}
 )
 def silver_session_result():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_session_result")
+        dp.read(f"{catalog}.{schema}.bronze_session_result")
         .withColumn("_processed_timestamp", F.current_timestamp())
     )
 
 
-@dlt.table(
+@dp.table(
     name="silver_starting_grid",
     comment="F1 starting grid positions",
     table_properties={"quality": "silver"}
 )
 def silver_starting_grid():
     return (
-        dlt.read(f"{catalog}.{schema}.bronze_starting_grid")
+        dp.read(f"{catalog}.{schema}.bronze_starting_grid")
         .withColumn("_processed_timestamp", F.current_timestamp())
     )

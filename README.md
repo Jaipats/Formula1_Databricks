@@ -1,13 +1,13 @@
 # Formula 1 Data Pipeline with Databricks
 
-A production-ready data pipeline that ingests Formula 1 race data from the OpenF1 API into Databricks using Delta Live Tables (DLT) with Autoloader.
+A production-ready data pipeline that ingests Formula 1 race data from the OpenF1 API into Databricks using Lakeflow Spark Declarative Pipelines with Autoloader.
 
 ## 🏎️ Overview
 
 This project provides a complete end-to-end pipeline for F1 data:
 - **Ingestion**: Fetch data from OpenF1 API and stage to Unity Catalog volumes
-- **Bronze Layer**: Autoloader streams JSON files into raw Delta tables
-- **Silver Layer**: Clean, validate, and transform data with proper types
+- **Bronze Layer**: Lakeflow Autoloader streams JSON files into raw Delta tables
+- **Silver Layer**: Clean, validate, and transform data with proper types and data quality checks
 - **Gold Layer**: Aggregate data for analytics and dashboards
 
 ## 🚀 Quick Start
@@ -52,9 +52,9 @@ bash deploy/databricks_cli_deploy.sh
 
 **Output**: JSON files in `/Volumes/{catalog}/{schema}/pipeline_storage/staging/`
 
-### 4. Run DLT Pipeline
+### 4. Run Lakeflow Pipeline
 
-1. Go to **Workflows** → **Delta Live Tables**
+1. Go to **Workflows** → **Lakeflow Pipelines**
 2. Create new pipeline:
    - Name: `f1_data_pipeline`
    - Storage: `/Volumes/jai_patel_f1_data/racing_stats/pipeline_storage`
@@ -94,7 +94,7 @@ Formula1_Databricks/
 │   ├── f1_volume_to_bronze_autoloader.py  # Autoloader → Bronze
 │   ├── f1_bronze_to_silver.py             # Bronze → Silver
 │   ├── f1_gold_aggregations.py            # Silver → Gold
-│   └── pipeline_config.json               # DLT pipeline config
+│   └── pipeline_config.json               # Lakeflow pipeline config
 ├── config/
 │   ├── pipeline_config.yaml          # Pipeline configuration
 │   └── settings.py                   # Config loader
@@ -117,7 +117,7 @@ Formula1_Databricks/
 - Processes data by session to avoid memory issues
 - Handles large datasets without crashes
 
-### 2. DLT with Autoloader
+### 2. Lakeflow with Autoloader
 - **Incremental processing**: Only processes new files
 - **Automatic schema evolution**: Handles schema changes gracefully
 - **Exactly-once semantics**: No duplicates
@@ -188,7 +188,7 @@ api:
 ## 📖 Documentation
 
 - **[QUICK_START.md](QUICK_START.md)** - 5-minute getting started guide
-- **[DLT_AUTOLOADER_GUIDE.md](DLT_AUTOLOADER_GUIDE.md)** - Complete Autoloader documentation
+- **[DLT_AUTOLOADER_GUIDE.md](DLT_AUTOLOADER_GUIDE.md)** - Complete Lakeflow Autoloader documentation
 - **[HOW_TO_RUN.md](HOW_TO_RUN.md)** - Detailed deployment instructions
 - **[DATABRICKS_NOTEBOOK_SETUP.md](DATABRICKS_NOTEBOOK_SETUP.md)** - Notebook best practices
 - **[API_DATA_AVAILABILITY.md](API_DATA_AVAILABILITY.md)** - API data availability info
@@ -233,9 +233,9 @@ sys.path.append('/Workspace/Users/YOUR_EMAIL@databricks.com/Formula1_Databricks'
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ 2. DLT Pipeline (Automatic)                                 │
+│ 2. Lakeflow Pipeline (Automatic)                             │
 │    Autoloader → Bronze → Silver → Gold                      │
-│    Triggered: Workflows → Delta Live Tables                 │
+│    Triggered: Workflows → Lakeflow Pipelines                │
 └────────────────────┬────────────────────────────────────────┘
                      │
                      ▼
@@ -249,7 +249,7 @@ sys.path.append('/Workspace/Users/YOUR_EMAIL@databricks.com/Formula1_Databricks'
 ## 📈 Performance
 
 - **Ingestion**: ~20-30 minutes for full 2025 season
-- **DLT Pipeline**: ~10-15 minutes for Bronze → Silver → Gold
+- **Lakeflow Pipeline**: ~10-15 minutes for Bronze → Silver → Gold
 - **Parallel API calls**: 50-60% faster than sequential
 - **Memory usage**: < 2GB (incremental writing)
 

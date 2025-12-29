@@ -1,8 +1,8 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # F1 Data Pipeline - Volume to Bronze (DLT with Autoloader)
+# MAGIC # F1 Data Pipeline - Volume to Bronze (Lakeflow with Autoloader)
 # MAGIC
-# MAGIC This Delta Live Tables (DLT) pipeline uses Autoloader to incrementally load JSON files  
+# MAGIC This Lakeflow Spark Declarative Pipeline uses Autoloader to incrementally load JSON files  
 # MAGIC from Unity Catalog volumes into Bronze Delta tables.
 # MAGIC
 # MAGIC **Benefits of Autoloader:**
@@ -21,7 +21,7 @@
 
 # COMMAND ----------
 
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
 # Get configuration from pipeline parameters
@@ -40,7 +40,7 @@ volume_base_path = f"/Volumes/{catalog}/{schema}/pipeline_storage/staging"
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_meetings",
     comment="Raw F1 race weekend meetings data from OpenF1 API",
     table_properties={
@@ -63,7 +63,7 @@ def bronze_meetings():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_sessions",
     comment="Raw F1 session data from OpenF1 API",
     table_properties={
@@ -86,7 +86,7 @@ def bronze_sessions():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_drivers",
     comment="Raw F1 drivers data from OpenF1 API",
     table_properties={
@@ -109,7 +109,7 @@ def bronze_drivers():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_laps",
     comment="Raw F1 lap timing data from OpenF1 API",
     table_properties={
@@ -132,7 +132,7 @@ def bronze_laps():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_pit",
     comment="Raw F1 pit stop data from OpenF1 API",
     table_properties={
@@ -155,7 +155,7 @@ def bronze_pit():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_stints",
     comment="Raw F1 tyre stint data from OpenF1 API",
     table_properties={
@@ -178,7 +178,7 @@ def bronze_stints():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_car_data",
     comment="Raw F1 car telemetry data from OpenF1 API",
     table_properties={
@@ -201,7 +201,7 @@ def bronze_car_data():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_position",
     comment="Raw F1 driver position data from OpenF1 API",
     table_properties={
@@ -224,7 +224,7 @@ def bronze_position():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_weather",
     comment="Raw F1 weather data from OpenF1 API",
     table_properties={
@@ -247,7 +247,7 @@ def bronze_weather():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_race_control",
     comment="Raw F1 race control messages from OpenF1 API",
     table_properties={
@@ -270,7 +270,7 @@ def bronze_race_control():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_team_radio",
     comment="Raw F1 team radio data from OpenF1 API",
     table_properties={
@@ -293,7 +293,7 @@ def bronze_team_radio():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_intervals",
     comment="Raw F1 interval data from OpenF1 API",
     table_properties={
@@ -316,7 +316,7 @@ def bronze_intervals():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_overtakes",
     comment="Raw F1 overtake events from OpenF1 API",
     table_properties={
@@ -338,7 +338,7 @@ def bronze_overtakes():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_session_result",
     comment="Raw F1 session results from OpenF1 API",
     table_properties={
@@ -360,7 +360,7 @@ def bronze_session_result():
 
 # COMMAND ----------
 
-@dlt.table(
+@dp.table(
     name="bronze_starting_grid",
     comment="Raw F1 starting grid data from OpenF1 API",
     table_properties={

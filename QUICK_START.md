@@ -24,7 +24,7 @@ COMMENT 'F1 racing statistics and telemetry data';
 
 -- Create volume for data staging
 CREATE VOLUME IF NOT EXISTS jai_patel_f1_data.racing_stats.pipeline_storage
-COMMENT 'Storage for DLT pipeline and staged data';
+COMMENT 'Storage for Lakeflow pipeline and staged data';
 
 -- Verify
 SELECT 'Setup complete!' as status;
@@ -70,9 +70,9 @@ This uploads all code to your Databricks workspace.
 
 ---
 
-## Step 4: Create & Run DLT Pipeline (1 minute)
+## Step 4: Create & Run Lakeflow Pipeline (1 minute)
 
-1. **Go to**: Workflows → Delta Live Tables
+1. **Go to**: Workflows → Lakeflow Pipelines
 2. **Click**: "Create Pipeline"
 3. **Configure**:
    - **Name**: `f1_data_pipeline`
@@ -142,7 +142,7 @@ To add more data (e.g., different year or new races):
      target_year: 2024  # Change year
    ```
 2. **Run ingestion**: Execute `01_ingest_f1_data.py` again
-3. **DLT auto-updates**: Pipeline automatically processes new files!
+3. **Lakeflow auto-updates**: Pipeline automatically processes new files!
 
 No manual steps needed - Autoloader detects and processes new files automatically! ✨
 
@@ -164,7 +164,7 @@ No manual steps needed - Autoloader detects and processes new files automaticall
 
 ### Customize Pipeline
 - Edit `config/pipeline_config.yaml` for API settings
-- Modify DLT notebooks for custom transformations
+- Modify Lakeflow notebooks for custom transformations
 - Add new endpoints or data sources
 
 ---
@@ -181,8 +181,8 @@ No manual steps needed - Autoloader detects and processes new files automaticall
 → Don't move imports before `restartPython()`
 → See: [DATABRICKS_NOTEBOOK_SETUP.md](DATABRICKS_NOTEBOOK_SETUP.md)
 
-### DLT Pipeline fails
-→ Check: Workflows → Delta Live Tables → Your Pipeline → Logs
+### Lakeflow Pipeline fails
+→ Check: Workflows → Lakeflow Pipelines → Your Pipeline → Logs
 → Verify: Volume path exists and has data
 
 ---
@@ -190,7 +190,7 @@ No manual steps needed - Autoloader detects and processes new files automaticall
 ## 📚 More Documentation
 
 - **[README.md](README.md)** - Complete project overview
-- **[DLT_AUTOLOADER_GUIDE.md](DLT_AUTOLOADER_GUIDE.md)** - Autoloader deep dive
+- **[DLT_AUTOLOADER_GUIDE.md](DLT_AUTOLOADER_GUIDE.md)** - Lakeflow Autoloader deep dive
 - **[HOW_TO_RUN.md](HOW_TO_RUN.md)** - Detailed instructions
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture
 
@@ -203,8 +203,8 @@ No manual steps needed - Autoloader detects and processes new files automaticall
 | 1. Setup Unity Catalog | 2 min | Create catalog, schema, volume |
 | 2. Deploy to Databricks | 1 min | Upload code via CLI |
 | 3. Run Ingestion | 20-30 min | Fetch API data → stage to volumes |
-| 4. Create DLT Pipeline | 1 min | Configure pipeline |
-| 5. Run DLT Pipeline | 10-15 min | Bronze → Silver → Gold |
+| 4. Create Lakeflow Pipeline | 1 min | Configure pipeline |
+| 5. Run Lakeflow Pipeline | 10-15 min | Bronze → Silver → Gold |
 | **Total** | **35-50 min** | **Complete end-to-end pipeline!** |
 
 ---

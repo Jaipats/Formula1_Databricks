@@ -1,8 +1,8 @@
-# DLT with Autoloader - Complete Guide
+# Lakeflow with Autoloader - Complete Guide
 
 ## 🎯 Overview
 
-The F1 data pipeline now uses **Delta Live Tables (DLT) with Autoloader** to incrementally load data from Unity Catalog volumes into Bronze Delta tables.
+The F1 data pipeline now uses **Lakeflow Spark Declarative Pipelines (Lakeflow) with Autoloader** to incrementally load data from Unity Catalog volumes into Bronze Delta tables.
 
 **This replaces** the manual `02_load_from_volume_to_delta.py` notebook with an automated, streaming solution.
 
@@ -34,7 +34,7 @@ The F1 data pipeline now uses **Delta Live Tables (DLT) with Autoloader** to inc
 │   └── ...                                                         │
 └──────────────────┬──────────────────────────────────────────────┘
                    │
-                   │ DLT Transformations
+                   │ Lakeflow Transformations
                    │
                    ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -87,7 +87,7 @@ The F1 data pipeline now uses **Delta Live Tables (DLT) with Autoloader** to inc
 
 Uses Autoloader to load JSON files from volumes:
 ```python
-@dlt.table(name="bronze_meetings")
+@dp.table(name="bronze_meetings")
 def bronze_meetings():
     return (
         spark.readStream
@@ -161,7 +161,7 @@ Creates analytical tables (unchanged):
 **Key settings**:
 - `storage`: Location for checkpoints and metadata
 - `catalog` & `schema`: Unity Catalog location
-- `libraries`: DLT notebooks in execution order
+- `libraries`: Lakeflow notebooks in execution order
 
 ---
 
@@ -181,10 +181,10 @@ This creates JSON files in:
   └── ...
 ```
 
-### Step 2: Run DLT Pipeline
+### Step 2: Run Lakeflow Pipeline
 ```bash
 # Option A: Using Databricks UI
-# 1. Go to Workflows → Delta Live Tables
+# 1. Go to Workflows → Lakeflow Spark Declarative Pipelines
 # 2. Find "f1_data_pipeline"
 # 3. Click "Start"
 
@@ -215,7 +215,7 @@ SELECT * FROM jai_patel_f1_data.racing_stats.gold_race_summary;
 ## 🔄 Incremental Updates
 
 ### Automatic Processing
-Once the DLT pipeline is running, it **automatically** processes new files:
+Once the Lakeflow pipeline is running, it **automatically** processes new files:
 
 1. **Run ingestion**: Add more data to volumes
    ```python
@@ -263,18 +263,18 @@ FROM jai_patel_f1_data.racing_stats.bronze_meetings;
 
 ## 🆚 Comparison: Manual vs Autoloader
 
-| Feature | Manual (`02_load_from_volume_to_delta.py`) | DLT Autoloader |
+| Feature | Manual (`02_load_from_volume_to_delta.py`) | Lakeflow Autoloader |
 |---------|---------------------------------------------|----------------|
 | **Processing** | Batch - load all files each time | Streaming - only new files |
-| **Automation** | Manual notebook execution | Automatic with DLT pipeline |
+| **Automation** | Manual notebook execution | Automatic with Lakeflow pipeline |
 | **Deduplication** | Manual tracking required | Built-in |
 | **Schema Evolution** | Manual updates | Automatic |
-| **Monitoring** | Custom logging | DLT UI & system tables |
+| **Monitoring** | Custom logging | Lakeflow UI & system tables |
 | **Fault Tolerance** | Manual retries | Automatic checkpointing |
 | **Performance** | Reprocesses all data | Incremental only |
 | **Production Ready** | Requires orchestration | Built for 24/7 |
 
-**Recommendation**: Use DLT Autoloader for production pipelines!
+**Recommendation**: Use Lakeflow Autoloader for production pipelines!
 
 ---
 
@@ -286,8 +286,8 @@ FROM jai_patel_f1_data.racing_stats.bronze_meetings;
 # 1. Verify files in volume
 dbutils.fs.ls("/Volumes/{catalog}/{schema}/pipeline_storage/staging/meetings/")
 
-# 2. Check DLT pipeline logs
-# Go to: Workflows → Delta Live Tables → f1_data_pipeline → Recent Updates
+# 2. Check Lakeflow pipeline logs
+# Go to: Workflows → Lakeflow Spark Declarative Pipelines → f1_data_pipeline → Recent Updates
 ```
 
 ### Issue: Schema inference errors
@@ -311,7 +311,7 @@ dbutils.fs.rm("/Volumes/{catalog}/{schema}/pipeline_storage/_checkpoints/bronze_
 ## 📚 Additional Resources
 
 - **Autoloader Documentation**: https://docs.databricks.com/ingestion/auto-loader/
-- **DLT Documentation**: https://docs.databricks.com/delta-live-tables/
+- **Lakeflow Documentation**: https://docs.databricks.com/delta-live-tables/
 - **Unity Catalog Volumes**: https://docs.databricks.com/data-governance/unity-catalog/volumes.html
 
 ---
@@ -321,11 +321,11 @@ dbutils.fs.rm("/Volumes/{catalog}/{schema}/pipeline_storage/_checkpoints/bronze_
 **Old workflow**:
 1. Run `01_ingest_f1_data_incremental_FIXED.py` → stage files
 2. Run `02_load_from_volume_to_delta.py` → load to Bronze ❌ (manual)
-3. Run DLT pipeline → Bronze to Silver to Gold
+3. Run Lakeflow pipeline → Bronze to Silver to Gold
 
 **New workflow** (Autoloader):
 1. Run `01_ingest_f1_data_incremental_FIXED.py` → stage files
-2. Run DLT pipeline → **Autoloader loads to Bronze** + Silver + Gold ✅ (automatic!)
+2. Run Lakeflow pipeline → **Autoloader loads to Bronze** + Silver + Gold ✅ (automatic!)
 
 **Benefits**:
 - ✅ Fully automated
@@ -336,5 +336,5 @@ dbutils.fs.rm("/Volumes/{catalog}/{schema}/pipeline_storage/_checkpoints/bronze_
 
 ---
 
-**The `02_load_from_volume_to_delta.py` notebook is now deprecated.** Use DLT with Autoloader instead!
+**The `02_load_from_volume_to_delta.py` notebook is now deprecated.** Use Lakeflow with Autoloader instead!
 
