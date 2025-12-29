@@ -1,397 +1,283 @@
-# Formula 1 Data Pipeline - Databricks
+# Formula 1 Data Pipeline with Databricks
 
-A comprehensive data pipeline that fetches Formula 1 race data from the [OpenF1 API](https://openf1.org/) and loads it into Databricks using Delta Live Tables (DLT). The pipeline supports Unity Catalog for data governance and provides ready-to-use dashboards and apps for race analytics.
+A production-ready data pipeline that ingests Formula 1 race data from the OpenF1 API into Databricks using Delta Live Tables (DLT) with Autoloader.
 
-## 🏎️ Features
+## 🏎️ Overview
 
-- **Automated Data Ingestion**: Fetch F1 data from OpenF1 API with rate limiting and error handling
-- **Parallel Processing**: Fetch multiple endpoints simultaneously (50-60% faster!)
-- **Delta Live Tables Pipeline**: Bronze → Silver → Gold medallion architecture
-- **Unity Catalog Integration**: Configurable catalog and schema for data governance
-- **Incremental Ingestion**: Stream data to volumes for memory efficiency
-- **API Rate Limiting**: Smart request management with automatic 429 handling
-- **Session-Based Fetching**: Handles large datasets by splitting requests per session
-- **Data Quality Checks**: Built-in DLT expectations for data validation
-- **Analytics-Ready Tables**: Pre-aggregated gold tables for driver performance, team stats, and more
-- **Visualization Ready**: SQL dashboards and Streamlit app included
-
-## 📊 Data Coverage
-
-The pipeline fetches data for **2025** (configurable) from the following OpenF1 endpoints:
-
-### Core Data
-- **Meetings**: Race weekend information
-- **Sessions**: Practice, Qualifying, Race, Sprint sessions
-- **Drivers**: Driver information and team assignments
-- **Laps**: Lap timing and sector times
-- **Position**: Driver positions throughout the session
-
-### Telemetry & Performance
-- **Car Data**: Speed, RPM, throttle, brake, gear, DRS
-- **Intervals**: Time gaps between drivers
-- **Pit Stops**: Pit stop timing and duration
-- **Stints**: Tyre compound strategies
-
-### Context & Events
-- **Weather**: Track and air temperature, humidity, wind, rainfall
-- **Race Control**: Flags, safety cars, penalties
-- **Team Radio**: Radio communication recordings
-- **Overtakes**: Overtaking events (beta)
-- **Starting Grid**: Grid positions (beta)
-- **Session Results**: Final results (beta)
-
-## 🏗️ Project Structure
-
-```
-Formula1/
-├── config/
-│   ├── pipeline_config.yaml       # Main configuration file
-│   └── settings.py                 # Python configuration loader
-├── utils/
-│   ├── api_client.py               # OpenF1 API client
-│   └── data_fetcher.py             # Data orchestration logic
-├── notebooks/
-│   └── 01_ingest_f1_data.py        # Data ingestion notebook
-├── dlt/
-│   ├── f1_bronze_to_silver.py      # Bronze → Silver DLT pipeline
-│   ├── f1_gold_aggregations.py     # Silver → Gold DLT pipeline
-│   └── pipeline_config.json        # DLT pipeline configuration
-├── dashboards/
-│   └── f1_race_analytics.sql       # SQL dashboard queries
-├── apps/
-│   └── f1_dashboard_app.py         # Streamlit dashboard app
-├── setup/
-│   └── setup_catalog.sql           # Unity Catalog setup script
-├── requirements.txt                # Python dependencies
-└── README.md                       # This file
-```
+This project provides a complete end-to-end pipeline for F1 data:
+- **Ingestion**: Fetch data from OpenF1 API and stage to Unity Catalog volumes
+- **Bronze Layer**: Autoloader streams JSON files into raw Delta tables
+- **Silver Layer**: Clean, validate, and transform data with proper types
+- **Gold Layer**: Aggregate data for analytics and dashboards
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+- Databricks workspace with Unity Catalog enabled
+- Databricks CLI installed and configured
+- Python 3.8+ (for local development)
 
-- Databricks workspace (AWS, Azure, or GCP)
-- Unity Catalog enabled
-- SQL Warehouse or compute cluster
-- Python 3.9+
-
-### Step 1: Configure Unity Catalog
-
-Edit `config/pipeline_config.yaml` to set your catalog and schema:
-
-```yaml
-unity_catalog:
-  catalog: "your_catalog_name"      # Change this
-  schema: "your_schema_name"         # Change this
-```
-
-### Step 2: Create Catalog and Schema
-
-Run the setup script in Databricks SQL or a notebook:
+### 1. Setup Unity Catalog
 
 ```sql
--- In Databricks SQL Editor
-%run setup/setup_catalog.sql
+-- Run in Databricks SQL or notebook
+CREATE CATALOG IF NOT EXISTS jai_patel_f1_data;
+CREATE SCHEMA IF NOT EXISTS jai_patel_f1_data.racing_stats;
+CREATE VOLUME IF NOT EXISTS jai_patel_f1_data.racing_stats.pipeline_storage;
 ```
 
-Or manually:
-
-```sql
-CREATE CATALOG IF NOT EXISTS your_catalog_name;
-CREATE SCHEMA IF NOT EXISTS your_catalog_name.your_schema_name;
+Or use the provided script:
+```bash
+# In Databricks, run: setup/setup_catalog.sql
 ```
 
-### Step 3: Upload Project to Databricks
-
-Option A: Using Databricks Repos (Recommended)
-1. Push this project to a Git repository
-2. In Databricks, go to **Repos** → **Add Repo**
-3. Clone your repository
-
-Option B: Manual Upload
-1. Upload files to **Workspace** → **Users** → your folder
-2. Maintain the directory structure
-
-### Step 4: Install Dependencies
-
-In a Databricks notebook:
-
-```python
-%pip install -r requirements.txt
-dbutils.library.restartPython()
-```
-
-### Step 5: Run Data Ingestion
-
-1. Open `notebooks/01_ingest_f1_data.py`
-2. Update the path in the notebook:
-   ```python
-   sys.path.append('/Workspace/Repos/<your-username>/Formula1')
-   ```
-3. Run all cells to fetch and load data into bronze tables
-
-### Step 6: Create DLT Pipeline
-
-1. Go to **Workflows** → **Delta Live Tables** → **Create Pipeline**
-2. Configure the pipeline:
-   - **Name**: `f1_data_pipeline`
-   - **Product Edition**: Advanced or Pro
-   - **Notebook Libraries**: 
-     - Add `/Workspace/Repos/<your-username>/Formula1/dlt/f1_bronze_to_silver`
-     - Add `/Workspace/Repos/<your-username>/Formula1/dlt/f1_gold_aggregations`
-   - **Configuration**:
-     ```
-     catalog = your_catalog_name
-     schema = your_schema_name
-     ```
-   - **Target**: Choose your catalog and schema
-   - **Storage Location**: `/mnt/f1_pipeline` (or your preferred location)
-3. Click **Create** and then **Start**
-
-### Step 7: Create Dashboard
-
-Option A: SQL Dashboard
-1. Open `dashboards/f1_race_analytics.sql` in Databricks SQL Editor
-2. Update the catalog and schema variables
-3. Run queries and create visualizations
-
-Option B: Genie Space (Databricks AI)
-1. Go to **Genie Spaces** in Databricks
-2. Create a new space
-3. Select tables from `your_catalog.your_schema`
-4. Ask natural language questions like:
-   - "Show me fastest lap times by driver"
-   - "What's the average pit stop duration by team?"
-   - "Compare tyre strategies in the last race"
-
-Option C: Streamlit App
-1. Update environment variables in `apps/f1_dashboard_app.py`
-2. Deploy as a Databricks App or run locally
-3. Access the interactive dashboard
-
-## ⚙️ Configuration Reference
-
-### pipeline_config.yaml
-
-```yaml
-unity_catalog:
-  catalog: "f1_data"              # Your Unity Catalog name
-  schema: "racing_stats"           # Your schema name
-  volume: "raw_data"               # Optional volume for raw files
-
-api:
-  base_url: "https://api.openf1.org/v1"
-  rate_limit_delay: 1              # Seconds between requests
-  timeout: 30                      # Request timeout
-  retry_attempts: 3                # Retry on failure
-
-data:
-  target_year: 2025                # Year to fetch data for
-  batch_size: 1000                 # Records per batch
-
-endpoints:
-  sessions: true                   # Enable/disable endpoints
-  drivers: true
-  laps: true
-  car_data: true
-  position: true
-  # ... more endpoints
-```
-
-### Environment Variables (for Databricks App)
+### 2. Deploy to Databricks
 
 ```bash
-export DATABRICKS_SERVER_HOSTNAME="your-workspace.cloud.databricks.com"
-export DATABRICKS_HTTP_PATH="/sql/1.0/warehouses/your-warehouse-id"
-export DATABRICKS_TOKEN="your-access-token"
-export F1_CATALOG="your_catalog_name"
-export F1_SCHEMA="your_schema_name"
+# Clone the repository
+git clone https://github.com/Jaipats/Formula1_Databricks.git
+cd Formula1_Databricks
+
+# Deploy using Databricks CLI
+bash deploy/databricks_cli_deploy.sh
 ```
 
-## 📈 Data Pipeline Architecture
+### 3. Run Data Ingestion
 
-```
-┌─────────────────┐
-│   OpenF1 API    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Data Ingestion │  ← notebooks/01_ingest_f1_data.py
-│  (API Client)   │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Bronze Tables  │  ← Raw API data
-│  (Raw Layer)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Silver Tables  │  ← Cleaned & validated data
-│ (Cleaned Layer) │  ← dlt/f1_bronze_to_silver.py
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Gold Tables   │  ← Aggregated analytics
-│ (Analytics)     │  ← dlt/f1_gold_aggregations.py
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────────────────┐
-│  Consumption Layer              │
-│  • SQL Dashboards               │
-│  • Genie Spaces                 │
-│  • Databricks Apps              │
-│  • BI Tools (Tableau, Power BI) │
-└─────────────────────────────────┘
-```
+1. Open Databricks workspace
+2. Navigate to: `/Workspace/Users/YOUR_EMAIL/Formula1_Databricks/notebooks/`
+3. Open: `01_ingest_f1_data.py`
+4. Update the workspace path (line 36)
+5. Attach to a cluster and run all cells
 
-## 📋 Key Tables
+**Output**: JSON files in `/Volumes/{catalog}/{schema}/pipeline_storage/staging/`
 
-### Bronze Layer
-- `bronze_meetings`, `bronze_sessions`, `bronze_drivers`
-- `bronze_laps`, `bronze_car_data`, `bronze_position`
-- `bronze_pit`, `bronze_stints`, `bronze_weather`
-- And more...
+### 4. Run DLT Pipeline
 
-### Silver Layer
-- `silver_meetings`, `silver_sessions`, `silver_drivers`
-- `silver_laps`, `silver_car_data`, `silver_position`
-- Includes data quality checks and type casting
+1. Go to **Workflows** → **Delta Live Tables**
+2. Create new pipeline:
+   - Name: `f1_data_pipeline`
+   - Storage: `/Volumes/jai_patel_f1_data/racing_stats/pipeline_storage`
+   - Configuration:
+     ```json
+     {
+       "catalog": "jai_patel_f1_data",
+       "schema": "racing_stats"
+     }
+     ```
+   - Libraries: Add notebooks from `dlt/` folder
+3. Click **Start**
 
-### Gold Layer
-- `gold_driver_performance` - Driver stats per session
-- `gold_team_performance` - Team-level aggregations
-- `gold_race_summary` - Race summaries with weather and incidents
-- `gold_tyre_strategy` - Tyre compound performance analysis
-- `gold_fastest_laps` - Fastest lap rankings
-- `gold_overtakes_analysis` - Overtaking statistics
+**Result**: Bronze, Silver, and Gold tables created automatically!
 
-## 🔍 Example Queries
+### 5. Query the Data
 
-### Fastest Lap Times
 ```sql
-SELECT 
-  full_name as driver,
-  team_name,
-  location,
-  fastest_lap_time
-FROM f1_data.racing_stats.gold_fastest_laps
-WHERE rank <= 10
-ORDER BY fastest_lap_time;
+-- Bronze (raw data)
+SELECT * FROM jai_patel_f1_data.racing_stats.bronze_meetings;
+
+-- Silver (cleaned data)
+SELECT * FROM jai_patel_f1_data.racing_stats.silver_meetings;
+
+-- Gold (analytics)
+SELECT * FROM jai_patel_f1_data.racing_stats.gold_race_summary;
 ```
 
-### Driver Performance
-```sql
-SELECT 
-  full_name,
-  team_name,
-  AVG(fastest_lap_time) as avg_fastest_lap,
-  AVG(pit_stop_count) as avg_pit_stops,
-  MAX(max_speed_st) as top_speed
-FROM f1_data.racing_stats.gold_driver_performance
-GROUP BY full_name, team_name
-ORDER BY avg_fastest_lap;
+## 📁 Project Structure
+
+```
+Formula1_Databricks/
+├── notebooks/
+│   ├── 01_ingest_f1_data.py          # API ingestion to volumes
+│   └── 02_explore_data.py            # Data exploration
+├── dlt/
+│   ├── f1_volume_to_bronze_autoloader.py  # Autoloader → Bronze
+│   ├── f1_bronze_to_silver.py             # Bronze → Silver
+│   ├── f1_gold_aggregations.py            # Silver → Gold
+│   └── pipeline_config.json               # DLT pipeline config
+├── config/
+│   ├── pipeline_config.yaml          # Pipeline configuration
+│   └── settings.py                   # Config loader
+├── utils/
+│   ├── api_client.py                 # OpenF1 API client
+│   ├── data_fetcher.py               # Data fetching logic
+│   └── volume_writer.py              # Volume writing utilities
+├── setup/
+│   └── setup_catalog.sql             # Unity Catalog setup
+├── deploy/
+│   └── databricks_cli_deploy.sh      # Deployment script
+└── dashboards/
+    └── f1_race_analytics.sql         # Sample dashboard queries
 ```
 
-### Tyre Strategy
-```sql
-SELECT 
-  compound,
-  AVG(avg_lap_time_on_compound) as avg_lap_time,
-  AVG(stint_laps) as avg_stint_length
-FROM f1_data.racing_stats.gold_tyre_strategy
-GROUP BY compound
-ORDER BY avg_lap_time;
+## 🎯 Key Features
+
+### 1. Memory-Efficient Ingestion
+- Writes data incrementally to volumes
+- Processes data by session to avoid memory issues
+- Handles large datasets without crashes
+
+### 2. DLT with Autoloader
+- **Incremental processing**: Only processes new files
+- **Automatic schema evolution**: Handles schema changes gracefully
+- **Exactly-once semantics**: No duplicates
+- **Production-ready**: Fault tolerant with checkpointing
+
+### 3. Parallel API Calls
+- Fetches multiple endpoints simultaneously
+- 50-60% faster than sequential fetching
+- Configurable worker threads
+
+### 4. Robust Error Handling
+- **429 (Rate Limit)**: Exponential backoff with `Retry-After` header support
+- **422 (Data Not Available)**: Gracefully skips and continues
+- **Timeouts**: Automatic retry with configurable attempts
+
+### 5. Medallion Architecture
+- **Bronze**: Raw data from API
+- **Silver**: Cleaned and validated data
+- **Gold**: Aggregated analytics tables
+
+## 📊 Data Sources
+
+All data from [OpenF1 API](https://openf1.org/):
+- **Meetings**: Race weekends
+- **Sessions**: Practice, Qualifying, Race, Sprint
+- **Drivers**: Driver information per session
+- **Laps**: Lap timing and sector times
+- **Car Data**: Telemetry (speed, RPM, throttle, brake, gear)
+- **Position**: Driver positions throughout session
+- **Pit Stops**: Pit stop timing
+- **Stints**: Tyre strategies
+- **Weather**: Track conditions
+- **Race Control**: Flags and messages
+- **Team Radio**: Radio communications
+- **Intervals**: Time gaps between drivers
+- **Overtakes**: Overtake events
+- **Session Results**: Final results
+- **Starting Grid**: Starting positions
+
+## ⚙️ Configuration
+
+Edit `config/pipeline_config.yaml`:
+
+```yaml
+# Unity Catalog
+unity_catalog:
+  catalog: "jai_patel_f1_data"
+  schema: "racing_stats"
+
+# Data Configuration
+data:
+  target_year: 2025  # Year to fetch
+  batch_size: 1000   # Records per batch
+  
+  # Car data filters (reduce payload size)
+  car_data_filters:
+    speed_gte: 200        # Minimum speed (km/h)
+    sample_drivers: true  # Only first 5 drivers per session
+
+# API Configuration
+api:
+  rate_limit_delay: 2      # Seconds between calls
+  retry_attempts: 5        # Number of retries
+  parallel_endpoints: true # Enable parallel fetching
+  max_workers: 3           # Parallel threads
 ```
 
-## 🛠️ Maintenance
+## 📖 Documentation
 
-### Updating Data
+- **[QUICK_START.md](QUICK_START.md)** - 5-minute getting started guide
+- **[DLT_AUTOLOADER_GUIDE.md](DLT_AUTOLOADER_GUIDE.md)** - Complete Autoloader documentation
+- **[HOW_TO_RUN.md](HOW_TO_RUN.md)** - Detailed deployment instructions
+- **[DATABRICKS_NOTEBOOK_SETUP.md](DATABRICKS_NOTEBOOK_SETUP.md)** - Notebook best practices
+- **[API_DATA_AVAILABILITY.md](API_DATA_AVAILABILITY.md)** - API data availability info
+- **[PARALLEL_PROCESSING_GUIDE.md](PARALLEL_PROCESSING_GUIDE.md)** - Parallel API calls guide
+- **[RATE_LIMIT_HANDLING.md](RATE_LIMIT_HANDLING.md)** - Rate limit handling details
 
-To fetch new data:
-1. Update `target_year` in `config/pipeline_config.yaml` if needed
-2. Run the ingestion notebook: `notebooks/01_ingest_f1_data.py`
-3. Run the DLT pipeline to update silver and gold tables
+## 🛠️ Troubleshooting
 
-### Incremental Updates
+### Import Errors in Notebooks
+**Error**: `ModuleNotFoundError: No module named 'config'`
 
-For incremental updates (e.g., after each race):
-- Modify the ingestion logic to fetch only new sessions
-- Use DLT's `append` mode instead of `overwrite`
+**Solution**: Update the workspace path in the notebook (line ~36):
+```python
+sys.path.append('/Workspace/Users/YOUR_EMAIL@databricks.com/Formula1_Databricks')
+```
 
-### Monitoring
+### Kernel Unresponsive
+**Error**: "Fatal error: The Python kernel is unresponsive"
 
-- Check DLT pipeline runs in **Workflows** → **Delta Live Tables**
-- Monitor data quality expectations in the DLT UI
-- Review `_ingestion_timestamp` and `_processed_timestamp` columns
+**Cause**: Imports before `dbutils.library.restartPython()`
 
-## 🐛 Troubleshooting
+**Solution**: See [DATABRICKS_NOTEBOOK_SETUP.md](DATABRICKS_NOTEBOOK_SETUP.md)
 
-### API Timeout Errors
-- Increase `timeout` value in `config/pipeline_config.yaml`
-- Reduce `batch_size` for large datasets
-- Enable/disable endpoints to reduce data volume
+### No Sessions Found
+**Error**: "No sessions found"
 
-### Memory Issues
-- Use larger cluster for data ingestion
-- Process data in smaller batches (by session or meeting)
-- Disable high-volume endpoints like `location`
+**Cause**: Wrong parameter order in `get_sessions()`
 
-### Missing Data
-- Check if the year has data available on OpenF1
-- Verify API endpoint is enabled in configuration
-- Check Databricks logs for errors
+**Solution**: Already fixed in latest version. Pull from GitHub.
 
-### Permission Errors
-- Ensure Unity Catalog permissions are granted
-- Verify catalog and schema exist
-- Check cluster permissions
+### Auto-Format Breaking Notebooks
+**Solution**: Disable auto-format in your IDE. See [DISABLE_AUTO_FORMAT.md](DISABLE_AUTO_FORMAT.md)
 
-## 📚 Resources
+## 🔄 Pipeline Workflow
 
-- [OpenF1 API Documentation](https://openf1.org/#api-endpoints)
-- [Databricks Delta Live Tables](https://docs.databricks.com/delta-live-tables/index.html)
-- [Unity Catalog Documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html)
-- [Databricks Apps](https://docs.databricks.com/en/apps/index.html)
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. API Ingestion (Manual)                                   │
+│    Run: notebooks/01_ingest_f1_data.py                      │
+│    Output: JSON files in volumes                            │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. DLT Pipeline (Automatic)                                 │
+│    Autoloader → Bronze → Silver → Gold                      │
+│    Triggered: Workflows → Delta Live Tables                 │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 3. Analytics & Dashboards                                   │
+│    Query Gold tables                                        │
+│    Build dashboards in Databricks                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 📈 Performance
+
+- **Ingestion**: ~20-30 minutes for full 2025 season
+- **DLT Pipeline**: ~10-15 minutes for Bronze → Silver → Gold
+- **Parallel API calls**: 50-60% faster than sequential
+- **Memory usage**: < 2GB (incremental writing)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to:
-- Add new gold layer aggregations
-- Enhance dashboard visualizations
-- Improve API client error handling
-- Add data quality tests
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test in Databricks
+5. Submit a pull request
 
 ## 📝 License
 
-This project is for educational and analytical purposes. OpenF1 is an unofficial project not associated with Formula 1 companies. F1, FORMULA ONE, and related marks are trademarks of Formula One Licensing B.V.
+This project is open source and available under the MIT License.
 
-## ⚠️ Important Notes
+## 🙏 Acknowledgments
 
-1. **API Limits**: The OpenF1 API has rate limits. The pipeline includes rate limiting (1 second between requests by default).
+- [OpenF1 API](https://openf1.org/) for providing F1 data
+- Databricks for the amazing platform
+- F1 community for inspiration
 
-2. **Data Volume**: Some endpoints (especially `location` and `car_data`) generate large amounts of data. These are disabled by default or require per-driver fetching.
+## 📧 Contact
 
-3. **Historical Data**: The project is configured for 2025 data. Historical data (2018-2024) is available via the API.
-
-4. **Real-Time Data**: Real-time data access requires a paid OpenF1 account. Historical data is free.
-
-5. **Compute Costs**: Be mindful of Databricks compute costs when running large-scale data pipelines.
-
-## 🎯 Next Steps
-
-After setup, you can:
-1. **Create Genie Space**: Use Databricks AI to query data in natural language
-2. **Build Custom Dashboards**: Use Databricks SQL or integrate with Power BI/Tableau
-3. **Schedule Pipeline**: Set up automated refreshes after each race
-4. **Add ML Models**: Build predictive models for race outcomes
-5. **Extend Analytics**: Add championship standings, driver comparisons, etc.
+For questions or issues:
+- Create an issue on GitHub
+- Check the documentation files
+- Review troubleshooting guides
 
 ---
 
-**Happy Racing! 🏁**
-
+**Happy Racing! 🏎️💨**

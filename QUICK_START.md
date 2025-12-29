@@ -1,299 +1,212 @@
-# Quick Start Guide - Formula 1 Data Pipeline
+# Quick Start Guide - 5 Minutes to F1 Data! 🏎️
 
-## 🚀 Get Started in 5 Minutes
+Get your F1 data pipeline running in just 5 minutes!
 
-### Step 1: Upload to Databricks Workspace
+## Prerequisites
+
+- ✅ Databricks workspace with Unity Catalog
+- ✅ Databricks CLI installed (`pip install databricks-cli`)
+- ✅ Git installed
+
+---
+
+## Step 1: Setup Unity Catalog (2 minutes)
+
+Run this SQL in Databricks:
+
+```sql
+-- Create catalog and schema
+CREATE CATALOG IF NOT EXISTS jai_patel_f1_data 
+COMMENT 'Formula 1 race data and analytics';
+
+CREATE SCHEMA IF NOT EXISTS jai_patel_f1_data.racing_stats 
+COMMENT 'F1 racing statistics and telemetry data';
+
+-- Create volume for data staging
+CREATE VOLUME IF NOT EXISTS jai_patel_f1_data.racing_stats.pipeline_storage
+COMMENT 'Storage for DLT pipeline and staged data';
+
+-- Verify
+SELECT 'Setup complete!' as status;
+```
+
+**Or** use the provided script: `setup/setup_catalog.sql`
+
+---
+
+## Step 2: Deploy to Databricks (1 minute)
 
 ```bash
-# Set your Databricks credentials
-export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
-export DATABRICKS_TOKEN="your-token"
+# Clone the repository
+git clone https://github.com/Jaipats/Formula1_Databricks.git
+cd Formula1_Databricks
 
-# Deploy using CLI
-cd /path/to/Formula1
-./deploy/databricks_cli_deploy.sh
+# Configure Databricks CLI (if not already done)
+databricks auth login --host https://YOUR_WORKSPACE.cloud.databricks.com
+
+# Deploy
+bash deploy/databricks_cli_deploy.sh
 ```
 
-Or manually upload via Databricks UI:
-- Go to Workspace → Import
-- Upload the entire `Formula1` folder
-
-### Step 2: Update Workspace Path
-
-Edit the notebook you want to run and update line ~28:
-
-```python
-# Change this:
-sys.path.append('/Workspace/Repos/<your-username>/Formula1_Databricks')
-
-# To your actual path:
-sys.path.append('/Workspace/Users/YOUR_EMAIL@databricks.com/Formula1_Databricks')
-```
-
-### Step 3: Choose Your Notebook
-
-#### Option A: Quick Test (Small Datasets)
-**Use**: `notebooks/01_ingest_f1_data.py`
-- ✅ Simple, loads all data into memory
-- ✅ Good for testing with limited endpoints
-- ⚠️ May crash with large datasets
-
-#### Option B: Production (Large Datasets) **RECOMMENDED**
-**Use**: `notebooks/01_ingest_f1_data_incremental_FIXED.py`
-- ✅ Memory-efficient, writes incrementally
-- ✅ Won't crash even with large datasets
-- ✅ Progress logging
-- ✅ Batched writes for car_data
-
-### Step 4: Configure (Optional)
-
-Edit `config/pipeline_config.yaml`:
-
-```yaml
-# Unity Catalog
-unity_catalog:
-  catalog: jai_patel_f1_data  # Change to your catalog name
-  schema: racing_stats
-
-# Data settings
-data:
-  target_year: 2025  # Change year if needed
-  
-  # Reduce car_data size (prevents crashes)
-  car_data_filters:
-    speed_gte: 200  # Only high-speed data
-    sample_drivers: true  # Only first 5 drivers
-
-# Enable/disable endpoints
-enabled_endpoints:
-  meetings: true
-  sessions: true
-  drivers: true
-  laps: true
-  pit: true
-  car_data: true  # Set to false if crashing
-  # ... others
-```
-
-### Step 5: Run the Notebook
-
-1. Open the notebook in Databricks
-2. Run all cells (Ctrl+Shift+Enter or Run All)
-3. Wait for completion (5-30 minutes depending on data size)
+This uploads all code to your Databricks workspace.
 
 ---
 
-## 🐛 Common Issues
+## Step 3: Run Data Ingestion (1 minute setup + 20-30 min run)
 
-### Issue 1: `NameError: name 'config' is not defined`
-
-**Cause**: Imports are in the wrong order
-
-**Fix**: Ensure imports come AFTER `restartPython()`:
-
-```python
-# ✅ Correct order:
-dbutils.library.restartPython()  # Cell 2
-# Then in Cell 3:
-from config.settings import config
-```
-
-**See**: `DATABRICKS_NOTEBOOK_SETUP.md` for details
-
-### Issue 2: Notebook Crashes / Kernel Dies
-
-**Cause**: Out of memory (loading too much data at once)
-
-**Fix**: Use the memory-efficient notebook:
-- Switch to `01_ingest_f1_data_incremental_FIXED.py`
-- Or disable large endpoints like `car_data`, `position`, `location`
-
-**See**: `NOTEBOOK_CRASH_FIX.md` for details
-
-### Issue 3: `ModuleNotFoundError: No module named 'yaml'`
-
-**Cause**: `pyyaml` not installed or imports before `restartPython()`
-
-**Fix**: 
-1. Ensure Cell 1 has: `%pip install pyyaml requests pandas`
-2. Ensure Cell 2 has: `dbutils.library.restartPython()`
-3. Ensure imports are in Cell 3 (AFTER restart)
-
-### Issue 4: `422 Client Error` for car_data
-
-**Cause**: Data not available for that session/driver
-
-**Fix**: This is normal! The pipeline handles it gracefully.
-- 422 errors are logged as INFO (not ERROR)
-- Pipeline continues with available data
-
-**See**: `API_DATA_AVAILABILITY.md` for details
-
-### Issue 5: `429 Too Many Requests`
-
-**Cause**: API rate limiting
-
-**Fix**: Already handled with exponential backoff!
-- Pipeline will automatically retry with increasing delays
-- Increase `rate_limit_delay` in config if needed
-
-**See**: `RATE_LIMIT_HANDLING.md` for details
-
----
-
-## 📊 What Happens After Ingestion?
-
-### Data Flow
-
-```
-OpenF1 API
-    ↓
-[Notebook: Ingest Data]
-    ↓
-Unity Catalog Volume (raw JSON)
-    ↓
-[Notebook: Load to Delta]
-    ↓
-Bronze Tables (raw data)
-    ↓
-[DLT Pipeline: Bronze → Silver]
-    ↓
-Silver Tables (cleaned data)
-    ↓
-[DLT Pipeline: Silver → Gold]
-    ↓
-Gold Tables (aggregated data)
-    ↓
-Dashboards / Genie Space / Apps
-```
-
-### Next Steps After Ingestion
-
-1. **Load raw data to Delta tables**:
+1. **Open Databricks workspace** in your browser
+2. **Navigate to**: `/Workspace/Users/YOUR_EMAIL/Formula1_Databricks/notebooks/`
+3. **Open**: `01_ingest_f1_data.py`
+4. **Update line 36** with your email:
    ```python
-   # Run: notebooks/02_load_from_volume_to_delta.py
+   sys.path.append('/Workspace/Users/YOUR_EMAIL@databricks.com/Formula1_Databricks')
    ```
+5. **Attach to a cluster** (or create one)
+6. **Click "Run All"**
 
-2. **Run DLT pipeline** (transforms bronze → silver → gold):
-   ```bash
-   databricks pipelines create --settings dlt/pipeline_config.json
-   databricks pipelines start --pipeline-id <your-pipeline-id>
-   ```
+**What it does**: Fetches F1 data from OpenF1 API and stages JSON files to volumes
 
-3. **Explore the data**:
-   ```python
-   # Run: notebooks/02_explore_data.py
-   ```
-
-4. **Create dashboards**:
-   - Import SQL queries from `dashboards/f1_race_analytics.sql`
-   - Create visualizations in Databricks SQL
-
-5. **Launch the app**:
-   ```bash
-   databricks apps deploy apps/f1_dashboard_app.py
-   ```
+**Output location**: `/Volumes/jai_patel_f1_data/racing_stats/pipeline_storage/staging/`
 
 ---
 
-## 📁 Project Structure
+## Step 4: Create & Run DLT Pipeline (1 minute)
 
-```
-Formula1/
-├── config/
-│   ├── pipeline_config.yaml     # Main configuration
-│   └── settings.py              # Config loader
-├── notebooks/
-│   ├── 01_ingest_f1_data.py                    # Simple ingestion
-│   ├── 01_ingest_f1_data_incremental_FIXED.py  # Memory-efficient ✅
-│   └── 02_explore_data.py                      # Data exploration
-├── utils/
-│   ├── api_client.py            # OpenF1 API client
-│   ├── data_fetcher.py          # Data orchestration
-│   └── volume_writer.py         # Volume writing
-├── dlt/
-│   ├── f1_bronze_to_silver.py   # Bronze → Silver
-│   └── f1_gold_aggregations.py  # Silver → Gold
-├── dashboards/
-│   └── f1_race_analytics.sql    # Dashboard queries
-└── apps/
-    └── f1_dashboard_app.py      # Streamlit app
+1. **Go to**: Workflows → Delta Live Tables
+2. **Click**: "Create Pipeline"
+3. **Configure**:
+   - **Name**: `f1_data_pipeline`
+   - **Storage**: `/Volumes/jai_patel_f1_data/racing_stats/pipeline_storage`
+   - **Configuration** (click "+ Add configuration"):
+     ```
+     catalog: jai_patel_f1_data
+     schema: racing_stats
+     ```
+   - **Notebook libraries** (click "+ Add notebook"):
+     - `/Workspace/Users/YOUR_EMAIL/Formula1_Databricks/dlt/f1_volume_to_bronze_autoloader`
+     - `/Workspace/Users/YOUR_EMAIL/Formula1_Databricks/dlt/f1_bronze_to_silver`
+     - `/Workspace/Users/YOUR_EMAIL/Formula1_Databricks/dlt/f1_gold_aggregations`
+   - **Target**: `production`
+   - **Cluster**: Use default settings (or customize)
+4. **Click**: "Create"
+5. **Click**: "Start"
+
+**What it does**: 
+- Autoloader reads JSON files from volumes
+- Creates Bronze tables (raw data)
+- Transforms to Silver tables (cleaned)
+- Aggregates to Gold tables (analytics)
+
+**Runtime**: ~10-15 minutes
+
+---
+
+## Step 5: Query Your Data! (30 seconds)
+
+```sql
+-- View raw meetings data
+SELECT * FROM jai_patel_f1_data.racing_stats.bronze_meetings;
+
+-- View cleaned sessions
+SELECT * FROM jai_patel_f1_data.racing_stats.silver_sessions
+ORDER BY date_start DESC;
+
+-- View race summary analytics
+SELECT * FROM jai_patel_f1_data.racing_stats.gold_race_summary;
+
+-- Driver performance
+SELECT * FROM jai_patel_f1_data.racing_stats.gold_driver_performance
+ORDER BY avg_lap_time;
 ```
 
 ---
 
-## 🎯 Recommended Workflow
+## 🎉 Done!
 
-### For Testing (Small Data)
-1. Edit `config/pipeline_config.yaml`:
+You now have a complete F1 data pipeline with:
+- ✅ Bronze tables (raw API data)
+- ✅ Silver tables (cleaned & validated)
+- ✅ Gold tables (analytics-ready)
+- ✅ Autoloader for incremental updates
+- ✅ Production-ready pipeline
+
+---
+
+## 🔄 Adding More Data
+
+To add more data (e.g., different year or new races):
+
+1. **Update config**: Edit `config/pipeline_config.yaml`
    ```yaml
-   enabled_endpoints:
-     meetings: true
-     sessions: true
-     drivers: true
-     laps: true
-     # Disable large endpoints
-     car_data: false
-     position: false
-     location: false
+   data:
+     target_year: 2024  # Change year
    ```
+2. **Run ingestion**: Execute `01_ingest_f1_data.py` again
+3. **DLT auto-updates**: Pipeline automatically processes new files!
 
-2. Run `01_ingest_f1_data.py`
-3. Check results in Unity Catalog
-
-### For Production (Full Data)
-1. Use default config (all endpoints enabled)
-2. Run `01_ingest_f1_data_incremental_FIXED.py`
-3. Wait for completion (20-30 minutes)
-4. Run `02_load_from_volume_to_delta.py`
-5. Run DLT pipeline
-6. Create dashboards
+No manual steps needed - Autoloader detects and processes new files automatically! ✨
 
 ---
 
-## 📚 Documentation
+## 📊 Next Steps
 
-- **Setup**: `README.md` - Full project overview
-- **Import Issues**: `DATABRICKS_NOTEBOOK_SETUP.md`
-- **Crash Issues**: `NOTEBOOK_CRASH_FIX.md`
-- **API Limits**: `API_DATA_AVAILABILITY.md`
-- **Rate Limits**: `RATE_LIMIT_HANDLING.md`
-- **Parallel Processing**: `PARALLEL_PROCESSING_GUIDE.md`
-- **Deployment**: `DATABRICKS_CLI_GUIDE.md`
-
----
-
-## 🆘 Need Help?
-
-1. **Check the error message** - most issues are documented above
-2. **Read the relevant guide** - see Documentation section
-3. **Check the logs** - look for ERROR or WARNING messages
-4. **Simplify** - disable endpoints, reduce data size, test incrementally
-
----
-
-## ✅ Success Checklist
-
-After running the ingestion notebook, verify:
-
-- [ ] No errors in the output
-- [ ] Volume created: `/Volumes/jai_patel_f1_data/racing_stats/raw_data`
-- [ ] Data files visible in volume
-- [ ] Stats printed at the end showing record counts
-- [ ] Notebook completed without crashing
-
-Check data:
-```python
-# List files
-display(dbutils.fs.ls("/Volumes/jai_patel_f1_data/racing_stats/raw_data/meetings"))
-
-# Read sample
-df = spark.read.json("/Volumes/jai_patel_f1_data/racing_stats/raw_data/meetings/*.json")
-display(df.limit(5))
+### Build Dashboards
+```sql
+-- Use queries from: dashboards/f1_race_analytics.sql
+-- Create visualizations in Databricks SQL
 ```
 
+### Explore Data
+```python
+# Run: notebooks/02_explore_data.py
+# Interactive data exploration
+```
+
+### Customize Pipeline
+- Edit `config/pipeline_config.yaml` for API settings
+- Modify DLT notebooks for custom transformations
+- Add new endpoints or data sources
+
 ---
 
-## 🚀 You're Ready!
+## 🆘 Troubleshooting
 
-Start with `01_ingest_f1_data_incremental_FIXED.py` and you'll have F1 data in your Unity Catalog in minutes! 🏎️💨
+### "ModuleNotFoundError: No module named 'config'"
+→ Update workspace path in notebook (line 36)
+
+### "No sessions found"
+→ Already fixed! Pull latest code from GitHub
+
+### "Kernel unresponsive"
+→ Don't move imports before `restartPython()`
+→ See: [DATABRICKS_NOTEBOOK_SETUP.md](DATABRICKS_NOTEBOOK_SETUP.md)
+
+### DLT Pipeline fails
+→ Check: Workflows → Delta Live Tables → Your Pipeline → Logs
+→ Verify: Volume path exists and has data
+
+---
+
+## 📚 More Documentation
+
+- **[README.md](README.md)** - Complete project overview
+- **[DLT_AUTOLOADER_GUIDE.md](DLT_AUTOLOADER_GUIDE.md)** - Autoloader deep dive
+- **[HOW_TO_RUN.md](HOW_TO_RUN.md)** - Detailed instructions
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture
+
+---
+
+## ⏱️ Time Breakdown
+
+| Step | Time | What Happens |
+|------|------|--------------|
+| 1. Setup Unity Catalog | 2 min | Create catalog, schema, volume |
+| 2. Deploy to Databricks | 1 min | Upload code via CLI |
+| 3. Run Ingestion | 20-30 min | Fetch API data → stage to volumes |
+| 4. Create DLT Pipeline | 1 min | Configure pipeline |
+| 5. Run DLT Pipeline | 10-15 min | Bronze → Silver → Gold |
+| **Total** | **35-50 min** | **Complete end-to-end pipeline!** |
+
+---
+
+**Ready to race! 🏁**
