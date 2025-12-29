@@ -21,13 +21,13 @@ api:
 
 # Data Configuration
 data:
-  target_year: 2025 # Year to fetch data for (2024 has complete data, 2025 might be incomplete)
+  target_year: 2024 # Year to fetch data for (2024 has complete data, 2025 might be incomplete)
   batch_size: 1000 # Records per batch for large datasets
 
   # Car data filtering (to reduce API response size)
   car_data_filters:
-    speed_gte: 100 # Only fetch data when speed >= 100 km/h (reduces ~40% of data)
-    sample_drivers: true # Only fetch data for first 5 drivers per session (for testing)
+    speed_gte: 50 # Only fetch data when speed >= 50 km/h (lowered from 100 for better data availability)
+    sample_drivers: false # Fetch all drivers (set to true for testing with first 5 drivers only)
 
   # Incremental storage options
   use_volume_staging: true # Write data to volume files incrementally before loading to Delta
