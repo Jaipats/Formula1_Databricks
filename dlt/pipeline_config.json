@@ -17,6 +17,11 @@
   "libraries": [
     {
       "notebook": {
+        "path": "/Workspace/Repos/<your-username>/Formula1/dlt/f1_volume_to_bronze_autoloader"
+      }
+    },
+    {
+      "notebook": {
         "path": "/Workspace/Repos/<your-username>/Formula1/dlt/f1_bronze_to_silver"
       }
     },
