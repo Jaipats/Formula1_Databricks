@@ -15,6 +15,7 @@ set -e
 # Configuration
 DATABRICKS_HOST="${DATABRICKS_HOST:-${DATABRICKS_SERVER_HOSTNAME}}"
 DATABRICKS_TOKEN="${DATABRICKS_TOKEN}"
+DATABRICKS_WAREHOUSE_ID="${DATABRICKS_WAREHOUSE_ID}"
 CATALOG="${F1_CATALOG:-jai_patel_f1_data}"
 SCHEMA="${F1_SCHEMA:-racing_stats}"
 
@@ -54,6 +55,18 @@ fi
 if [ -z "$DATABRICKS_TOKEN" ]; then
     echo -e "${RED}❌ Error: DATABRICKS_TOKEN not set${NC}"
     echo "Set it with: export DATABRICKS_TOKEN='your-token'"
+    exit 1
+fi
+
+if [ -z "$DATABRICKS_WAREHOUSE_ID" ]; then
+    echo -e "${RED}❌ Error: DATABRICKS_WAREHOUSE_ID not set${NC}"
+    echo "Set it with: export DATABRICKS_WAREHOUSE_ID='your-warehouse-id'"
+    echo ""
+    echo "To get your warehouse ID:"
+    echo "  1. Go to Databricks → SQL Warehouses"
+    echo "  2. Click on your warehouse"
+    echo "  3. Copy the Warehouse ID from the URL or details"
+    echo "     Example: 'a1b2c3d4e5f6g7h8' from URL /sql/warehouses/a1b2c3d4e5f6g7h8"
     exit 1
 fi
 
@@ -129,10 +142,12 @@ SERIALIZED_SPACE_JSON=$(echo "$SPACE_CONFIG" | jq -c . | jq -R .)
 PAYLOAD=$(jq -n \
   --arg display_name "${SPACE_NAME}" \
   --arg description "${SPACE_DESCRIPTION}" \
+  --arg warehouse_id "${DATABRICKS_WAREHOUSE_ID}" \
   --argjson serialized_space "${SPACE_CONFIG}" \
   '{
     display_name: $display_name,
     description: $description,
+    warehouse_id: $warehouse_id,
     serialized_space: ($serialized_space | tostring)
   }')
 

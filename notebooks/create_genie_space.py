@@ -38,6 +38,11 @@ import json
 CATALOG = "jai_patel_f1_data"
 SCHEMA = "racing_stats"
 
+# Get Warehouse ID from environment or use default
+# You can find your warehouse ID in: SQL Warehouses → Your Warehouse → Details
+# Or from the URL: /sql/warehouses/<warehouse-id>
+WAREHOUSE_ID = os.getenv("DATABRICKS_WAREHOUSE_ID", "4b9b953939869799")  # Update with your warehouse ID
+
 # Genie Space Configuration
 SPACE_NAME = "F1 Race Analytics"
 SPACE_DESCRIPTION = """Formula 1 Race Analytics Genie Space
@@ -192,6 +197,7 @@ space_config = {
 payload = {
     "display_name": SPACE_NAME,
     "description": SPACE_DESCRIPTION.strip(),
+    "warehouse_id": WAREHOUSE_ID,
     "serialized_space": json.dumps(space_config)  # Convert to JSON string
 }
 

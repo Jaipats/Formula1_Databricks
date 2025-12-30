@@ -58,6 +58,7 @@ You have **three options** to create the Genie Space:
 # Set environment variables
 export DATABRICKS_HOST='your-workspace.cloud.databricks.com'
 export DATABRICKS_TOKEN='your-token'
+export DATABRICKS_WAREHOUSE_ID='your-warehouse-id'
 
 # Run the script
 cd deploy
@@ -70,6 +71,7 @@ cd deploy
 # Set environment variables
 export DATABRICKS_HOST='your-workspace.cloud.databricks.com'
 export DATABRICKS_TOKEN='your-token'
+export DATABRICKS_WAREHOUSE_ID='your-warehouse-id'
 
 # Run the script
 cd deploy
@@ -80,11 +82,18 @@ cd deploy
 
 1. Upload `notebooks/create_genie_space.py` to your Databricks workspace
 2. Open the notebook
-3. Run all cells
-4. The notebook will:
+3. Update `WAREHOUSE_ID` variable (~line 34) with your SQL Warehouse ID
+4. Run all cells
+5. The notebook will:
    - Verify all tables exist
    - Create the Genie Space
    - Provide a link to access it
+
+**📍 How to get your Warehouse ID:**
+1. Go to Databricks → **SQL Warehouses**
+2. Click on your warehouse
+3. Copy the ID from the URL: `/sql/warehouses/<warehouse-id>`
+   - Example: `4b9b953939869799`
 
 ## 📝 Prerequisites
 
@@ -228,6 +237,12 @@ https://your-workspace.cloud.databricks.com/genie/spaces/{space_id}
 The creation scripts will provide the direct link.
 
 ## 🐛 Troubleshooting
+
+### Error: "Missing field warehouse_id" (400 Bad Request)
+- **Status:** ✅ Fixed in latest version
+- **Solution:** Set `DATABRICKS_WAREHOUSE_ID` environment variable
+- **Command:** `export DATABRICKS_WAREHOUSE_ID='your-warehouse-id'`
+- **How to find:** SQL Warehouses → Your Warehouse → Copy ID from URL
 
 ### Error: "Missing field serialized_space" or "Expected Scalar value" (400 Bad Request)
 - **Status:** ✅ Fixed in latest version

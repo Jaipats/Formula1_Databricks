@@ -20,6 +20,7 @@ import json
 # Configuration
 DATABRICKS_HOST = os.getenv("DATABRICKS_HOST") or os.getenv("DATABRICKS_SERVER_HOSTNAME")
 DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN")
+DATABRICKS_WAREHOUSE_ID = os.getenv("DATABRICKS_WAREHOUSE_ID")
 CATALOG = os.getenv("F1_CATALOG", "jai_patel_f1_data")
 SCHEMA = os.getenv("F1_SCHEMA", "racing_stats")
 
@@ -83,6 +84,17 @@ def validate_config():
         print("Set it with: export DATABRICKS_TOKEN='your-token'")
         return False
     
+    if not DATABRICKS_WAREHOUSE_ID:
+        print("❌ Error: DATABRICKS_WAREHOUSE_ID not set")
+        print("Set it with: export DATABRICKS_WAREHOUSE_ID='your-warehouse-id'")
+        print()
+        print("To get your warehouse ID:")
+        print("  1. Go to Databricks → SQL Warehouses")
+        print("  2. Click on your warehouse")
+        print("  3. Copy the Warehouse ID from the URL or details")
+        print("     Example: 'a1b2c3d4e5f6g7h8' from URL /sql/warehouses/a1b2c3d4e5f6g7h8")
+        return False
+    
     return True
 
 def create_genie_space():
@@ -140,6 +152,7 @@ def create_genie_space():
     payload = {
         "display_name": GENIE_SPACE_NAME,
         "description": GENIE_SPACE_DESCRIPTION.strip(),
+        "warehouse_id": DATABRICKS_WAREHOUSE_ID,
         "serialized_space": json.dumps(space_config)  # Must be a JSON string!
     }
     
