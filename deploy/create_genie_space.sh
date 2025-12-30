@@ -131,8 +131,8 @@ TABLE_ARRAY+="]"
 echo ""
 echo -e "${YELLOW}🚀 Creating Genie Space...${NC}"
 
-# Create serialized_space configuration
-SPACE_CONFIG="{\"table_full_names\": ${TABLE_ARRAY}}"
+# Create serialized_space configuration with version 1 (required by API)
+SPACE_CONFIG="{\"version\": 1, \"table_full_names\": ${TABLE_ARRAY}}"
 
 # Escape for JSON string (serialize as JSON string)
 # The serialized_space must be a JSON string, not an object

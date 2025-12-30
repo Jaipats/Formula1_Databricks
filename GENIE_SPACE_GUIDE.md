@@ -238,6 +238,13 @@ The creation scripts will provide the direct link.
 
 ## 🐛 Troubleshooting
 
+### Error: "ExportConverter only supports version 1, but got 0" (400 Bad Request)
+- **Status:** ✅ Fixed in latest version
+- **Solution:** Update to latest code from genie branch
+- **Note:** The `serialized_space` must include `"version": 1` field
+- **Command:** `git pull origin genie`
+- **Technical:** `{"version": 1, "table_full_names": [...]}`
+
 ### Error: "Missing field warehouse_id" (400 Bad Request)
 - **Status:** ✅ Fixed in latest version
 - **Solution:** Set `DATABRICKS_WAREHOUSE_ID` environment variable

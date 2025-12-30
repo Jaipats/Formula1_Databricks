@@ -144,8 +144,9 @@ def create_genie_space():
         "Content-Type": "application/json"
     }
     
-    # Genie API requires serialized_space as a JSON string
+    # Genie API requires serialized_space as a JSON string with version 1
     space_config = {
+        "version": 1,
         "table_full_names": all_tables
     }
     
@@ -157,9 +158,10 @@ def create_genie_space():
     }
     
     # Optional: Uncomment to debug payload
-    # print("Debug - Payload (serialized_space is a JSON string):")
+    # print("Debug - Payload (serialized_space is a JSON string with version 1):")
     # print(json.dumps(payload, indent=2))
     # print(f"serialized_space type: {type(payload['serialized_space'])}")
+    # print(f"serialized_space content: {payload['serialized_space']}")
     # print()
     
     try:

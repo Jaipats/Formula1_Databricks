@@ -33,6 +33,7 @@
 
 import requests
 import json
+import os
 
 # Configuration
 CATALOG = "jai_patel_f1_data"
@@ -189,8 +190,9 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Request payload - serialized_space must be a JSON string (not object!)
+# Request payload - serialized_space must be a JSON string with version 1
 space_config = {
+    "version": 1,
     "table_full_names": all_tables
 }
 
