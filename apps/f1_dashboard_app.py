@@ -14,7 +14,8 @@ from datetime import datetime, timedelta
 # Configuration - Update these with your Databricks settings
 DATABRICKS_SERVER_HOSTNAME = os.getenv("DATABRICKS_SERVER_HOSTNAME", "e2-demo-field-eng.cloud.databricks.com")
 DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH", "/sql/1.0/warehouses/4b9b953939869799")
-DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN")  # Set via environment variable
+DATABRICKS_TOKEN = st.context.headers.get('X-Forwarded-Access-Token')
+#os.getenv("DATABRICKS_TOKEN")  # Set via environment variable
 
 # Unity Catalog Configuration - Make this configurable
 CATALOG = os.getenv("F1_CATALOG", "jai_patel_f1_data")
@@ -316,7 +317,7 @@ def show_overview(year: int = 2025):
         location,
         fastest_lap_time as lap_time
     FROM {CATALOG}.{SCHEMA}.gold_fastest_laps
-    WHERE rank <= 10 AND year = {year}
+    WHERE rank <= 10
     ORDER BY fastest_lap_time ASC
     LIMIT 10
     """
