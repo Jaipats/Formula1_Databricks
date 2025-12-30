@@ -83,18 +83,77 @@ SELECT * FROM jai_patel_f1_data.racing_stats.silver_meetings;
 SELECT * FROM jai_patel_f1_data.racing_stats.gold_race_summary;
 ```
 
+### 6. Set Up Streamlit Databricks App (Optional)
+
+After your data is loaded, set up the interactive F1 analytics Databricks App:
+
+```bash
+# Set environment variables
+export DATABRICKS_HOST='your-workspace.cloud.databricks.com'
+export DATABRICKS_TOKEN='your-personal-access-token'
+export DATABRICKS_HTTP_PATH='/sql/1.0/warehouses/your-warehouse-id'
+
+# Run the app locally
+cd apps
+streamlit run app.py
+```
+
+**Features:**
+- Overview dashboard with season statistics
+- Driver performance analysis with comparison mode
+- Team analytics (Race sessions only)
+- Detailed race analysis with multiple charts
+- Tire strategy analysis with team filtering
+
+**For Production:** Deploy as a Databricks App using `apps/app.yaml` configuration.
+
+See `apps/app.py` for details and deployment instructions.
+
+### 7. Create Genie Space (Optional - Recommended)
+
+After data is loaded and verified, create a Genie Space for natural language queries:
+
+**Option 1: Using Databricks Notebook**
+1. Upload `notebooks/create_genie_space.py` to your workspace
+2. Run all cells
+3. Get instant access link to your Genie Space
+
+**Option 2: Using CLI Script**
+```bash
+export DATABRICKS_HOST='your-workspace.cloud.databricks.com'
+export DATABRICKS_TOKEN='your-token'
+cd deploy
+./create_genie_space.sh
+```
+
+**What is Genie?**
+Genie is an AI-powered analytics tool that lets you ask questions in natural language:
+- "Show me the top 10 fastest laps from 2024"
+- "Compare Red Bull and Mercedes pit stop performance"
+- "What tire compounds were used most in Monaco?"
+
+The Genie Space includes **19 tables** (13 silver + 6 gold) covering all F1 data.
+
+📖 **Full Guide:** See `GENIE_SPACE_GUIDE.md` for complete documentation and example questions.
+
 ## 📁 Project Structure
 
 ```
 Formula1_Databricks/
 ├── notebooks/
 │   ├── 01_ingest_f1_data.py          # API ingestion to volumes
-│   └── 02_explore_data.py            # Data exploration
+│   ├── 02_explore_data.py            # Data exploration
+│   └── create_genie_space.py         # Create Genie Space (interactive)
 ├── dlt/
 │   ├── f1_volume_to_bronze_autoloader.py  # Autoloader → Bronze
 │   ├── f1_bronze_to_silver.py             # Bronze → Silver
 │   ├── f1_gold_aggregations.py            # Silver → Gold
 │   └── pipeline_config.json               # Lakeflow pipeline config
+├── apps/
+│   ├── app.py                        # Streamlit Databricks App
+│   ├── app.yaml                      # Databricks Apps config
+│   ├── requirements.txt              # Python dependencies
+│   └── test_connection.py            # Connection diagnostic tool
 ├── config/
 │   ├── pipeline_config.yaml          # Pipeline configuration
 │   └── settings.py                   # Config loader
@@ -105,9 +164,15 @@ Formula1_Databricks/
 ├── setup/
 │   └── setup_catalog.sql             # Unity Catalog setup
 ├── deploy/
-│   └── databricks_cli_deploy.sh      # Deployment script
-└── dashboards/
-    └── f1_race_analytics.sql         # Sample dashboard queries
+│   ├── databricks_cli_deploy.sh      # Deployment script
+│   ├── create_genie_space.py         # Create Genie Space (CLI Python)
+│   └── create_genie_space.sh         # Create Genie Space (CLI Shell)
+├── dashboards/
+│   └── f1_race_analytics.sql         # Sample dashboard queries
+└── docs/
+    ├── GENIE_SPACE_GUIDE.md          # Complete Genie Space guide
+    ├── DLT_AUTOLOADER_GUIDE.md       # Lakeflow Autoloader guide
+    └── QUICK_START.md                # Quick start guide
 ```
 
 ## 🎯 Key Features
