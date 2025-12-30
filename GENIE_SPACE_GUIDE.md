@@ -229,11 +229,12 @@ The creation scripts will provide the direct link.
 
 ## 🐛 Troubleshooting
 
-### Error: "Missing field serialized_space" (400 Bad Request)
+### Error: "Missing field serialized_space" or "Expected Scalar value" (400 Bad Request)
 - **Status:** ✅ Fixed in latest version
 - **Solution:** Update to latest code from genie branch
-- **Note:** API requires `serialized_space` wrapper around table list
+- **Note:** API requires `serialized_space` as a **JSON string**, not an object
 - **Command:** `git pull origin genie`
+- **Technical:** The field must be serialized: `json.dumps({"table_full_names": [...]})`
 
 ### Error: "Tables do not exist"
 - **Solution:** Run the DLT pipeline first to create tables

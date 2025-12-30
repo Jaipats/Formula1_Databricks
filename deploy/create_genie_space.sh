@@ -118,17 +118,23 @@ TABLE_ARRAY+="]"
 echo ""
 echo -e "${YELLOW}🚀 Creating Genie Space...${NC}"
 
-# Create JSON payload with serialized_space structure
-PAYLOAD=$(cat <<EOF
-{
-  "display_name": "${SPACE_NAME}",
-  "description": "${SPACE_DESCRIPTION}",
-  "serialized_space": {
-    "table_full_names": ${TABLE_ARRAY}
-  }
-}
-EOF
-)
+# Create serialized_space configuration
+SPACE_CONFIG="{\"table_full_names\": ${TABLE_ARRAY}}"
+
+# Escape for JSON string (serialize as JSON string)
+# The serialized_space must be a JSON string, not an object
+SERIALIZED_SPACE_JSON=$(echo "$SPACE_CONFIG" | jq -c . | jq -R .)
+
+# Create final payload
+PAYLOAD=$(jq -n \
+  --arg display_name "${SPACE_NAME}" \
+  --arg description "${SPACE_DESCRIPTION}" \
+  --argjson serialized_space "${SPACE_CONFIG}" \
+  '{
+    display_name: $display_name,
+    description: $description,
+    serialized_space: ($serialized_space | tostring)
+  }')
 
 # Make API request
 RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
