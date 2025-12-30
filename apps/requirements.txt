@@ -1,0 +1,9 @@
+# Databricks Apps requirements
+# Following: https://docs.databricks.com/aws/en/dev-tools/databricks-apps/tutorial-streamlit
+
+databricks-sdk
+databricks-sql-connector
+streamlit
+pandas
+plotly
+

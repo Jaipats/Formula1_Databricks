@@ -6,18 +6,23 @@ Interactive dashboard for Formula 1 race statistics and performance analysis
 import streamlit as st
 import pandas as pd
 from databricks import sql
+from databricks.sdk.core import Config
 import os
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
-# Configuration - Update these with your Databricks settings
-DATABRICKS_SERVER_HOSTNAME = os.getenv("DATABRICKS_SERVER_HOSTNAME", "e2-demo-field-eng.cloud.databricks.com")
-DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH", "/sql/1.0/warehouses/4b9b953939869799")
-DATABRICKS_TOKEN = st.context.headers.get('X-Forwarded-Access-Token')
-#os.getenv("DATABRICKS_TOKEN")  # Set via environment variable
+# Databricks Configuration
+# Set DATABRICKS_HOST for local development (Config looks for this variable)
+if not os.getenv("DATABRICKS_HOST"):
+    hostname = os.getenv("DATABRICKS_SERVER_HOSTNAME", "e2-demo-field-eng.cloud.databricks.com")
+    os.environ["DATABRICKS_HOST"] = hostname
 
-# Unity Catalog Configuration - Make this configurable
+# Initialize Databricks SDK Config
+# Automatically detects credentials from environment variables or Databricks Apps context
+cfg = Config()
+
+# Unity Catalog Configuration
 CATALOG = os.getenv("F1_CATALOG", "jai_patel_f1_data")
 SCHEMA = os.getenv("F1_SCHEMA", "racing_stats")
 
@@ -53,32 +58,56 @@ st.markdown("""
 
 
 @st.cache_resource
-def get_connection():
-    """Create database connection with timeout"""
+def get_connection(http_path: str):
+    """
+    Create database connection using Databricks Apps authentication.
+    Following the official tutorial: https://docs.databricks.com/aws/en/dev-tools/databricks-apps/tutorial-streamlit
+    
+    The Config object automatically handles authentication:
+    - In Databricks Apps: Uses service principal (DATABRICKS_CLIENT_ID/SECRET)
+    - Local development: Uses DATABRICKS_TOKEN
+    """
     try:
-        # Check if token is set
-        if not DATABRICKS_TOKEN:
-            st.error("⚠️ DATABRICKS_TOKEN environment variable is not set!")
-            st.info("Set it with: export DATABRICKS_TOKEN='your-token-here'")
-            return None
-        
-        # Add timeout to connection - prevents hanging forever
         connection = sql.connect(
-            server_hostname=DATABRICKS_SERVER_HOSTNAME,
-            http_path=DATABRICKS_HTTP_PATH,
-            access_token=DATABRICKS_TOKEN,
-            _socket_timeout=15  # 15 second connection timeout
+            server_hostname=cfg.host,
+            http_path=http_path,
+            credentials_provider=lambda: cfg.authenticate,
         )
-        
         return connection
     except Exception as e:
-        st.error(f"❌ Failed to connect to Databricks: {str(e)}")
-        st.warning("Check your connection settings and token")
-        with st.expander("Connection Details"):
+        error_msg = str(e)
+        st.error(f"❌ Failed to connect to Databricks: {error_msg}")
+        
+        # Provide helpful troubleshooting info
+        if "Error during request to server" in error_msg or "INVALID_TOKEN" in error_msg:
+            st.warning("⚠️ Connection Error - Possible causes:")
+            st.markdown("""
+            - **Invalid or expired credentials** - Generate a new personal access token
+            - **SQL Warehouse stopped** - Ensure the warehouse is running
+            - **Incorrect HTTP path** - Verify the SQL Warehouse path
+            - **Missing environment variables** - Set DATABRICKS_HOST and DATABRICKS_TOKEN
+            """)
+            
+            st.info("💡 **For Local Development:**")
+            st.code("""
+export DATABRICKS_HOST='your-workspace.cloud.databricks.com'
+export DATABRICKS_TOKEN='dapi...'
+export DATABRICKS_HTTP_PATH='/sql/1.0/warehouses/xxxxx'
+            """)
+        
+        with st.expander("🔍 Connection Details for Debugging"):
+            token_set = os.getenv('DATABRICKS_TOKEN')
             st.code(f"""
-Hostname: {DATABRICKS_SERVER_HOSTNAME}
-HTTP Path: {DATABRICKS_HTTP_PATH}
-Token: {'Set' if DATABRICKS_TOKEN else 'NOT SET'}
+Hostname: {cfg.host if hasattr(cfg, 'host') else 'Not configured'}
+HTTP Path: {http_path}
+
+Environment Variables:
+- DATABRICKS_HOST: {os.getenv('DATABRICKS_HOST', '❌ Not set')}
+- DATABRICKS_HTTP_PATH: {os.getenv('DATABRICKS_HTTP_PATH', '❌ Not set')}
+- DATABRICKS_TOKEN: {'✅ Set (' + str(len(token_set)) + ' chars)' if token_set else '❌ Not set'}
+- DATABRICKS_CLIENT_ID: {'✅ Set' if os.getenv('DATABRICKS_CLIENT_ID') else '❌ Not set (App mode)'}
+
+Error: {error_msg}
             """)
         return None
 
@@ -86,7 +115,8 @@ Token: {'Set' if DATABRICKS_TOKEN else 'NOT SET'}
 @st.cache_data(ttl=3600)
 def run_query(query: str, timeout: int = QUERY_TIMEOUT) -> pd.DataFrame:
     """Execute SQL query and return results as DataFrame"""
-    conn = get_connection()
+    http_path = os.getenv("DATABRICKS_HTTP_PATH", "/sql/1.0/warehouses/4b9b953939869799")
+    conn = get_connection(http_path)
     if conn is None:
         return pd.DataFrame()
     
@@ -115,41 +145,48 @@ def run_query(query: str, timeout: int = QUERY_TIMEOUT) -> pd.DataFrame:
 def test_connection():
     """Test database connection and return status"""
     try:
-        # Check prerequisites first
-        if not DATABRICKS_TOKEN:
-            return False, "DATABRICKS_TOKEN not set in environment"
+        st.info("Step 1/3: Checking configuration...")
         
-        st.info("Step 1/3: Checking token...")
-        st.info("Step 2/3: Establishing connection...")
+        # Get configuration values
+        hostname = cfg.host if hasattr(cfg, 'host') else None
+        http_path = os.getenv("DATABRICKS_HTTP_PATH", "/sql/1.0/warehouses/4b9b953939869799")
         
-        # Create a fresh connection (not cached) for testing
+        if not hostname:
+            return False, "DATABRICKS_HOST not configured"
+        
+        st.info(f"Step 2/3: Connecting to {hostname[:40]}...")
+        
+        # Create connection using the standard method
         conn = sql.connect(
-            server_hostname=DATABRICKS_SERVER_HOSTNAME,
-            http_path=DATABRICKS_HTTP_PATH,
-            access_token=DATABRICKS_TOKEN,
-            _socket_timeout=15  # 15 second timeout for test
+            server_hostname=cfg.host,
+            http_path=http_path,
+            credentials_provider=lambda: cfg.authenticate,
         )
         
         st.info("Step 3/3: Running test query...")
         
         # Try a simple query
-        test_query = "SELECT 1 as test"
+        test_query = "SELECT 1 as test, current_user() as user"
         with conn.cursor() as cursor:
             cursor.execute(test_query)
             result = cursor.fetchone()
             if result and result[0] == 1:
-                return True, "Connection successful! ✅"
+                user = result[1] if len(result) > 1 else "unknown"
+                return True, f"Connection successful! ✅ (User: {user})"
             return False, "Unexpected query result"
+            
     except TimeoutError as e:
         return False, f"Connection timeout - server may be unreachable: {str(e)}"
     except Exception as e:
         error_msg = str(e)
-        if "Invalid access token" in error_msg or "authentication" in error_msg.lower():
-            return False, "Authentication failed - check your DATABRICKS_TOKEN"
-        elif "refused" in error_msg.lower() or "timeout" in error_msg.lower():
-            return False, f"Cannot reach server - check hostname: {error_msg}"
+        if "Invalid access token" in error_msg or "INVALID_TOKEN" in error_msg:
+            return False, "Authentication failed - check DATABRICKS_TOKEN"
+        elif "DATABRICKS_HOST" in error_msg:
+            return False, "DATABRICKS_HOST not set in environment"
+        elif "Warehouse" in error_msg or "does not exist" in error_msg:
+            return False, f"SQL Warehouse issue - check HTTP path: {error_msg[:100]}"
         else:
-            return False, f"Connection error: {error_msg}"
+            return False, f"Connection error: {error_msg[:150]}"
 
 
 def check_tables_exist():
@@ -202,11 +239,24 @@ def main():
     
     # Show connection status
     with st.sidebar.expander("🔧 Connection Settings"):
-        st.text(f"Host: {DATABRICKS_SERVER_HOSTNAME[:50]}...")
-        st.text(f"Path: {DATABRICKS_HTTP_PATH}")
-        st.text(f"Token: {'✅ Set' if DATABRICKS_TOKEN else '❌ NOT SET'}")
-        if not DATABRICKS_TOKEN:
-            st.warning("Set DATABRICKS_TOKEN environment variable!")
+        hostname = cfg.host if hasattr(cfg, 'host') else "Not configured"
+        http_path = os.getenv('DATABRICKS_HTTP_PATH', 'Using default')
+        token = os.getenv('DATABRICKS_TOKEN')
+        client_id = os.getenv('DATABRICKS_CLIENT_ID')
+        
+        st.text(f"Host: {hostname[:40]}..." if len(hostname) > 40 else f"Host: {hostname}")
+        st.text(f"Path: {http_path[:40]}..." if len(http_path) > 40 else f"Path: {http_path}")
+        
+        # Determine authentication mode
+        if client_id:
+            st.success("✅ App Mode (Service Principal)")
+            st.text(f"Client ID: {client_id[:20]}...")
+        elif token:
+            st.info("✅ Local Dev Mode (Token)")
+            st.text(f"Token: {len(token)} chars")
+        else:
+            st.warning("❌ No credentials found!")
+            st.caption("Set DATABRICKS_HOST and DATABRICKS_TOKEN")
     
     # Connection test button
     col_test, col_clear = st.sidebar.columns([2, 1])
