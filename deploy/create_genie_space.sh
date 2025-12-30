@@ -131,24 +131,52 @@ TABLE_ARRAY+="]"
 echo ""
 echo -e "${YELLOW}🚀 Creating Genie Space...${NC}"
 
-# Create serialized_space configuration with version 1 (required by API)
-SPACE_CONFIG="{\"version\": 1, \"table_full_names\": ${TABLE_ARRAY}}"
+# Create serialized_space configuration with proper structure
+# Based on: https://docs.databricks.com/api/workspace/genie/createspace
+SPACE_CONFIG=$(jq -n \
+  --argjson tables "${TABLE_ARRAY}" \
+  '{
+    version: 1,
+    config: {
+      sample_questions: [
+        {
+          id: "q1",
+          question: ["Show me the top 10 fastest laps from 2024"]
+        },
+        {
+          id: "q2",
+          question: ["Compare Red Bull and Mercedes pit stop performance"]
+        },
+        {
+          id: "q3",
+          question: ["What tire compounds were used most in the Monaco Grand Prix?"]
+        },
+        {
+          id: "q4",
+          question: ["Which driver had the most overtakes this season?"]
+        },
+        {
+          id: "q5",
+          question: ["What was the weather like during the last race?"]
+        }
+      ]
+    },
+    data_sources: {
+      tables: ($tables | map({identifier: .}))
+    }
+  }')
 
-# Escape for JSON string (serialize as JSON string)
-# The serialized_space must be a JSON string, not an object
-SERIALIZED_SPACE_JSON=$(echo "$SPACE_CONFIG" | jq -c . | jq -R .)
-
-# Create final payload
+# Create final payload - serialized_space must be a JSON string
 PAYLOAD=$(jq -n \
   --arg display_name "${SPACE_NAME}" \
   --arg description "${SPACE_DESCRIPTION}" \
   --arg warehouse_id "${DATABRICKS_WAREHOUSE_ID}" \
-  --argjson serialized_space "${SPACE_CONFIG}" \
+  --argjson space_config "${SPACE_CONFIG}" \
   '{
     display_name: $display_name,
     description: $description,
     warehouse_id: $warehouse_id,
-    serialized_space: ($serialized_space | tostring)
+    serialized_space: ($space_config | tostring)
   }')
 
 # Make API request

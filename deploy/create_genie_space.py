@@ -144,14 +144,41 @@ def create_genie_space():
         "Content-Type": "application/json"
     }
     
-    # Genie API requires serialized_space as a JSON string with version 1
+    # Genie API requires serialized_space as a JSON string with proper structure
+    # Based on: https://docs.databricks.com/api/workspace/genie/createspace
     space_config = {
         "version": 1,
-        "table_full_names": all_tables
+        "config": {
+            "sample_questions": [
+                {
+                    "id": "q1",
+                    "question": ["Show me the top 10 fastest laps from 2024"]
+                },
+                {
+                    "id": "q2",
+                    "question": ["Compare Red Bull and Mercedes pit stop performance"]
+                },
+                {
+                    "id": "q3",
+                    "question": ["What tire compounds were used most in the Monaco Grand Prix?"]
+                },
+                {
+                    "id": "q4",
+                    "question": ["Which driver had the most overtakes this season?"]
+                },
+                {
+                    "id": "q5",
+                    "question": ["What was the weather like during the last race?"]
+                }
+            ]
+        },
+        "data_sources": {
+            "tables": [{"identifier": table} for table in all_tables]
+        }
     }
     
     payload = {
-        "display_name": GENIE_SPACE_NAME,
+        "title": GENIE_SPACE_NAME,
         "description": GENIE_SPACE_DESCRIPTION.strip(),
         "warehouse_id": DATABRICKS_WAREHOUSE_ID,
         "serialized_space": json.dumps(space_config)  # Must be a JSON string!
@@ -187,7 +214,7 @@ def create_genie_space():
             print("  - Which driver had the most overtakes this season?")
             print()
             print(f"Access your Genie Space in Databricks UI:")
-            print(f"https://{DATABRICKS_HOST}/genie/spaces/{space_id}")
+            print(f"https://{DATABRICKS_HOST}/genie/rooms/{space_id}")
             print()
             
             return True

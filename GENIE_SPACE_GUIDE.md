@@ -243,7 +243,7 @@ The creation scripts will provide the direct link.
 - **Solution:** Update to latest code from genie branch
 - **Note:** The `serialized_space` must include `"version": 1` field
 - **Command:** `git pull origin genie`
-- **Technical:** `{"version": 1, "table_full_names": [...]}`
+- **Technical:** See proper structure below
 
 ### Error: "Missing field warehouse_id" (400 Bad Request)
 - **Status:** ✅ Fixed in latest version
@@ -254,9 +254,37 @@ The creation scripts will provide the direct link.
 ### Error: "Missing field serialized_space" or "Expected Scalar value" (400 Bad Request)
 - **Status:** ✅ Fixed in latest version
 - **Solution:** Update to latest code from genie branch
-- **Note:** API requires `serialized_space` as a **JSON string**, not an object
+- **Note:** API requires `serialized_space` as a **JSON string** with proper structure
 - **Command:** `git pull origin genie`
-- **Technical:** The field must be serialized: `json.dumps({"table_full_names": [...]})`
+- **Technical:** See proper structure below
+
+### ✅ Correct `serialized_space` Structure
+The `serialized_space` field must be a **JSON string** with this exact structure:
+
+```json
+{
+  "version": 1,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "q1",
+        "question": ["Your sample question here"]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {"identifier": "catalog.schema.table_name"}
+    ]
+  }
+}
+```
+
+**Key Requirements:**
+- Must be serialized as a JSON string: `json.dumps(space_config)`
+- `version` must be `1`
+- Tables go in `data_sources.tables` as objects with `identifier` key
+- Sample questions are optional but recommended in `config.sample_questions`
 
 ### Error: "Tables do not exist"
 - **Solution:** Run the DLT pipeline first to create tables

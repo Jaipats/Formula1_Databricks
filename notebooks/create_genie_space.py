@@ -190,14 +190,41 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Request payload - serialized_space must be a JSON string with version 1
+# Request payload - serialized_space must be a JSON string with proper structure
+# Based on: https://docs.databricks.com/api/workspace/genie/createspace
 space_config = {
     "version": 1,
-    "table_full_names": all_tables
+    "config": {
+        "sample_questions": [
+            {
+                "id": "q1",
+                "question": ["Show me the top 10 fastest laps from 2024"]
+            },
+            {
+                "id": "q2",
+                "question": ["Compare Red Bull and Mercedes pit stop performance"]
+            },
+            {
+                "id": "q3",
+                "question": ["What tire compounds were used most in the Monaco Grand Prix?"]
+            },
+            {
+                "id": "q4",
+                "question": ["Which driver had the most overtakes this season?"]
+            },
+            {
+                "id": "q5",
+                "question": ["What was the weather like during the last race?"]
+            }
+        ]
+    },
+    "data_sources": {
+        "tables": [{"identifier": table} for table in all_tables]
+    }
 }
 
 payload = {
-    "display_name": SPACE_NAME,
+    "title": SPACE_NAME,
     "description": SPACE_DESCRIPTION.strip(),
     "warehouse_id": WAREHOUSE_ID,
     "serialized_space": json.dumps(space_config)  # Convert to JSON string
@@ -229,7 +256,7 @@ try:
             <p><strong>Space ID:</strong> {space_id}</p>
             <p><strong>Name:</strong> {SPACE_NAME}</p>
             <p><strong>Tables:</strong> {len(all_tables)}</p>
-            <p><a href="https://{workspace_url}/genie/spaces/{space_id}" target="_blank" style="color: #155724; font-weight: bold;">
+            <p><a href="https://{workspace_url}/genie/rooms/{space_id}" target="_blank" style="color: #155724; font-weight: bold;">
                 🚀 Open Genie Space →
             </a></p>
         </div>
