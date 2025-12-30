@@ -184,11 +184,13 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Request payload
+# Request payload - Genie API requires serialized_space structure
 payload = {
     "display_name": SPACE_NAME,
     "description": SPACE_DESCRIPTION.strip(),
-    "table_full_names": all_tables
+    "serialized_space": {
+        "table_full_names": all_tables
+    }
 }
 
 # Make API request

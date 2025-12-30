@@ -118,12 +118,14 @@ TABLE_ARRAY+="]"
 echo ""
 echo -e "${YELLOW}🚀 Creating Genie Space...${NC}"
 
-# Create JSON payload
+# Create JSON payload with serialized_space structure
 PAYLOAD=$(cat <<EOF
 {
   "display_name": "${SPACE_NAME}",
   "description": "${SPACE_DESCRIPTION}",
-  "table_full_names": ${TABLE_ARRAY}
+  "serialized_space": {
+    "table_full_names": ${TABLE_ARRAY}
+  }
 }
 EOF
 )

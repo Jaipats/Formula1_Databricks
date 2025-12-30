@@ -229,9 +229,16 @@ The creation scripts will provide the direct link.
 
 ## 🐛 Troubleshooting
 
+### Error: "Missing field serialized_space" (400 Bad Request)
+- **Status:** ✅ Fixed in latest version
+- **Solution:** Update to latest code from genie branch
+- **Note:** API requires `serialized_space` wrapper around table list
+- **Command:** `git pull origin genie`
+
 ### Error: "Tables do not exist"
 - **Solution:** Run the DLT pipeline first to create tables
 - **Command:** `cd deploy && ./run_pipeline.sh`
+- **Verify:** `SELECT COUNT(*) FROM catalog.schema.silver_sessions;`
 
 ### Error: "Genie not available"
 - **Solution:** Genie may not be enabled in your workspace

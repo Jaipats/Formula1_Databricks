@@ -121,6 +121,8 @@ def create_genie_space():
     
     print()
     print("🚀 Creating Genie Space...")
+    print(f"API Endpoint: https://{DATABRICKS_HOST}/api/2.0/genie/spaces")
+    print()
     
     # Prepare API request
     url = f"https://{DATABRICKS_HOST}/api/2.0/genie/spaces"
@@ -130,11 +132,19 @@ def create_genie_space():
         "Content-Type": "application/json"
     }
     
+    # Genie API requires a specific payload structure
     payload = {
         "display_name": GENIE_SPACE_NAME,
         "description": GENIE_SPACE_DESCRIPTION.strip(),
-        "table_full_names": all_tables
+        "serialized_space": {
+            "table_full_names": all_tables
+        }
     }
+    
+    # Optional: Uncomment to debug payload
+    # print("Debug - Payload:")
+    # print(json.dumps(payload, indent=2))
+    # print()
     
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=30)
