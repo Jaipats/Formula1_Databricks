@@ -156,7 +156,7 @@ SPACE_CONFIG=$(jq -nc \
       sample_questions: [
         {
           id: $uuid1,
-          question: ["Show me the top 10 fastest laps from 2024"]
+          question: ["Show me the top 10 fastest laps from 2025"]
         },
         {
           id: $uuid2,
@@ -219,7 +219,7 @@ if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
     echo "🎉 You can now use Genie to ask questions about your F1 data!"
     echo ""
     echo "Example questions:"
-    echo "  - Show me the top 10 fastest laps from 2024"
+    echo "  - Show me the top 10 fastest laps from 2025"
     echo "  - Compare Red Bull and Mercedes pit stop performance"
     echo "  - What was the weather like during the Monaco Grand Prix?"
     echo "  - Which driver had the most overtakes this season?"

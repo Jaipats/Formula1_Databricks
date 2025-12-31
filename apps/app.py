@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 from databricks import sql
 from databricks.sdk.core import Config
+from databricks.sdk import WorkspaceClient
 import os
 import plotly.express as px
 import plotly.graph_objects as go
@@ -26,6 +27,9 @@ cfg = Config()
 CATALOG = os.getenv("F1_CATALOG", "jai_patel_f1_data")
 SCHEMA = os.getenv("F1_SCHEMA", "racing_stats")
 
+# Genie Space Configuration (set this after creating your Genie Space)
+GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "")  # Get from Genie Space Settings or creation output
+
 # Query timeout in seconds
 QUERY_TIMEOUT = 30
 
@@ -40,13 +44,94 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
     <style>
+    /* Global font size reduction */
+    html, body, [class*="css"] {
+        font-size: 14px;
+    }
+    
+    /* Make dialog wider */
+    [data-testid="stDialog"] {
+        max-width: 900px !important;
+        width: 90vw !important;
+    }
+    
     .main-header {
-        font-size: 3rem;
+        font-size: 2.5rem;
         font-weight: bold;
         color: #E10600;
         text-align: center;
         padding: 1rem;
     }
+    
+    /* Floating Chatbot Button */
+    .floating-chat-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #E10600 0%, #FF6B00 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(225, 6, 0, 0.4);
+        z-index: 999;
+        transition: transform 0.2s;
+    }
+    .floating-chat-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(225, 6, 0, 0.6);
+    }
+    .floating-chat-button svg {
+        fill: white;
+        width: 30px;
+        height: 30px;
+    }
+    
+    /* Chat Container */
+    .chat-container {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 400px;
+        max-width: calc(100vw - 40px);
+        height: 600px;
+        max-height: calc(100vh - 120px);
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        z-index: 998;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .chat-header {
+        background: linear-gradient(135deg, #E10600 0%, #FF6B00 100%);
+        color: white;
+        padding: 16px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .chat-close {
+        cursor: pointer;
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        background: #f8f9fa;
+    }
+    
     .metric-card {
         background-color: #f0f2f6;
         padding: 1rem;
@@ -226,6 +311,293 @@ def get_sessions_for_filter(year: int):
     return run_query(sessions_query, timeout=15)
 
 
+@st.dialog("🤖 Genie Integration - F1 Race Analytics", width="large")
+def chatbot_dialog():
+    """Genie Integration dialog overlay"""
+    
+    # Check if Genie is configured
+    if not GENIE_SPACE_ID:
+        st.warning("""
+        ⚠️ **Genie Space not configured**
+        
+        To enable the AI chatbot:
+        1. Run: `python deploy/create_genie_space.py`
+        2. Get Space ID: `python deploy/get_genie_space_id.py`
+        3. Set `GENIE_SPACE_ID` in environment or `app.yaml`
+        """)
+        return
+    
+    # Sample questions
+    with st.expander("💡 Sample Questions"):
+        sample_qs = [
+            "Show me the top 10 fastest laps from 2025",
+            "Compare Red Bull and Mercedes pit stop performance",
+            "Which driver had the most overtakes this season?",
+            "Show Lewis Hamilton's best lap times"
+        ]
+        cols = st.columns(2)
+        for idx, q in enumerate(sample_qs):
+            with cols[idx % 2]:
+                if st.button(q, key=f"sq_{idx}", use_container_width=True):
+                    st.session_state.pending_question = q
+    
+    # Display chat history
+    for msg in st.session_state.genie_messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if "sql" in msg:
+                with st.expander("📊 SQL Query"):
+                    st.code(msg["sql"], language="sql")
+            if "dataframe" in msg and msg["dataframe"] is not None:
+                st.dataframe(msg["dataframe"], use_container_width=True)
+    
+    # Process pending question from sample
+    if hasattr(st.session_state, 'pending_question'):
+        user_input = st.session_state.pending_question
+        delattr(st.session_state, 'pending_question')
+    else:
+        user_input = st.chat_input("Ask about F1 data...")
+    
+    if user_input:
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(user_input)
+        st.session_state.genie_messages.append({"role": "user", "content": user_input})
+        
+        # Process with Genie
+        with st.chat_message("assistant"):
+            try:
+                w = WorkspaceClient(config=cfg)
+                
+                # Start or continue conversation  
+                with st.status("🏎️ Analyzing F1 data...", expanded=True) as status:
+                    st.write("Connecting to Genie...")
+                    
+                    if st.session_state.genie_conversation_id:
+                        # For continuing conversation, use create_message
+                        st.write(f"Continuing conversation: {st.session_state.genie_conversation_id[:8]}...")
+                        result = w.genie.create_message_and_wait(
+                            space_id=GENIE_SPACE_ID,
+                            conversation_id=st.session_state.genie_conversation_id,
+                            content=user_input
+                        )
+                    else:
+                        # Start new conversation
+                        st.write("Starting new conversation...")
+                        result = w.genie.start_conversation_and_wait(
+                            space_id=GENIE_SPACE_ID,
+                            content=user_input
+                        )
+                    
+                    st.write("Response received!")
+                
+                # Store conversation ID (check both result and result.message if exists)
+                conv_id = None
+                if hasattr(result, 'conversation_id') and result.conversation_id:
+                    conv_id = result.conversation_id
+                elif hasattr(result, 'message') and hasattr(result.message, 'conversation_id') and result.message.conversation_id:
+                    conv_id = result.message.conversation_id
+                
+                if conv_id:
+                    st.session_state.genie_conversation_id = conv_id
+                
+                # Parse response
+                full_response = ""
+                sql_query = None
+                result_df = None
+                
+                # Check if result IS the message (not result.message)
+                if hasattr(result, 'content'):
+                    msg = result
+                elif hasattr(result, 'message') and result.message:
+                    msg = result.message
+                else:
+                    msg = None
+                
+                if msg:
+                    # Get main content
+                    if hasattr(msg, 'content') and msg.content:
+                        full_response = msg.content
+                    
+                    # Check for query_result directly on message (GenieMessage.query_result)
+                    if hasattr(msg, 'query_result') and msg.query_result:
+                        qr = msg.query_result
+                        
+                        # Try to extract SQL or statement_id
+                        if hasattr(qr, 'statement') and qr.statement:
+                            sql_query = qr.statement
+                        
+                        # Check for statement_id and fetch results
+                        if hasattr(qr, 'statement_id') and qr.statement_id:
+                            statement_id = qr.statement_id
+                            
+                            # Try to get the statement result
+                            try:
+                                statement_result = w.statement_execution.get_statement(statement_id)
+                                
+                                # Get SQL from statement
+                                if hasattr(statement_result, 'statement') and statement_result.statement:
+                                    if hasattr(statement_result.statement, 'statement_text'):
+                                        sql_query = statement_result.statement.statement_text
+                                
+                                # Get result data and manifest
+                                if hasattr(statement_result, 'result') and statement_result.result:
+                                    result_data = statement_result.result
+                                    
+                                    # Check for data_array in statement result
+                                    if hasattr(result_data, 'data_array') and result_data.data_array:
+                                        qr = result_data  # Replace qr with the actual result
+                                
+                                # Also check for manifest at statement level
+                                if hasattr(statement_result, 'manifest') and statement_result.manifest:
+                                    if not hasattr(qr, 'manifest') or not qr.manifest:
+                                        qr.manifest = statement_result.manifest
+                            except Exception as stmt_err:
+                                pass  # Silently handle errors
+                        
+                        # Try to parse data
+                        try:
+                            if hasattr(qr, 'data_array') and qr.data_array:
+                                # Parse as simple list of lists
+                                rows = []
+                                for row in qr.data_array:
+                                    if isinstance(row, (list, tuple)):
+                                        rows.append(list(row))
+                                    elif hasattr(row, '__iter__'):
+                                        rows.append(list(row))
+                                
+                                # Get column names from manifest
+                                cols = None
+                                if hasattr(qr, 'manifest') and qr.manifest:
+                                    if hasattr(qr.manifest, 'schema') and qr.manifest.schema:
+                                        if hasattr(qr.manifest.schema, 'columns'):
+                                            cols = [c.name for c in qr.manifest.schema.columns]
+                                
+                                if rows:
+                                    if cols:
+                                        result_df = pd.DataFrame(rows, columns=cols)
+                                    else:
+                                        result_df = pd.DataFrame(rows)
+                        except Exception as parse_err:
+                            pass  # Silently handle parsing errors
+                    
+                    # Check attachments for additional content
+                    if hasattr(msg, 'attachments') and msg.attachments:
+                        for idx, att in enumerate(msg.attachments):
+                            # Text attachment
+                            if hasattr(att, 'text') and att.text:
+                                if hasattr(att.text, 'content') and att.text.content:
+                                    if full_response:
+                                        full_response += "\n\n"
+                                    full_response += att.text.content
+                            
+                            # Query attachment
+                            if hasattr(att, 'query') and att.query:
+                                # Get SQL from query
+                                if hasattr(att.query, 'query') and att.query.query:
+                                    if not sql_query:
+                                        sql_query = att.query.query
+                                
+                                # Check for result data in attachment
+                                if hasattr(att.query, 'result') and att.query.result and result_df is None:
+                                    st.write(f"      • Result object in attachment")
+                                    qr_att = att.query.result
+                                    result_attrs = [a for a in dir(qr_att) if not a.startswith('_')]
+                                    st.write(f"        Result attributes: {', '.join(result_attrs[:10])}")
+                                    
+                                    try:
+                                        if hasattr(qr_att, 'data_array') and qr_att.data_array:
+                                            st.write(f"        ✓ data_array: {len(qr_att.data_array)} rows")
+                                            rows = []
+                                            for row in qr_att.data_array:
+                                                if hasattr(row, 'values'):
+                                                    row_data = []
+                                                    for v in row.values:
+                                                        if hasattr(v, 'value'):
+                                                            row_data.append(v.value)
+                                                        else:
+                                                            row_data.append(str(v))
+                                                    rows.append(row_data)
+                                            
+                                            if rows and hasattr(qr_att, 'columns'):
+                                                cols = [c.name if hasattr(c, 'name') else str(c) for c in qr_att.columns]
+                                                result_df = pd.DataFrame(rows, columns=cols)
+                                                st.write(f"        ✅ Created DataFrame from attachment: {len(result_df)} rows")
+                                    except Exception as parse_err:
+                                        st.warning(f"        Parse error: {parse_err}")
+                    else:
+                        st.write("📎 No attachments found")
+                
+                status.update(label="✅ Response ready!", state="complete", expanded=False)
+                
+                # Separator
+                st.markdown("---")
+                st.markdown("### 💬 Genie Response")
+                
+                # Display text response
+                if full_response:
+                    st.markdown(full_response)
+                else:
+                    st.info("_No text summary provided_")
+                
+                # Display SQL query in expander
+                if sql_query:
+                    with st.expander("📊 View SQL Query"):
+                        st.code(sql_query, language="sql")
+                
+                # Display results DataFrame
+                if result_df is not None and not result_df.empty:
+                    st.markdown(f"**📈 Results ({len(result_df)} rows):**")
+                    st.dataframe(result_df, use_container_width=True)
+                elif result_df is not None:
+                    st.warning("Query returned no results")
+                else:
+                    st.error("Could not parse query results - check debug output above")
+                
+                # Save to history
+                msg_data = {"role": "assistant", "content": full_response if full_response else "No response content"}
+                if sql_query:
+                    msg_data["sql"] = sql_query
+                if result_df is not None:
+                    msg_data["dataframe"] = result_df
+                st.session_state.genie_messages.append(msg_data)
+                
+            except Exception as e:
+                error_msg = f"❌ Error: {str(e)}"
+                st.error(error_msg)
+                st.session_state.genie_messages.append({"role": "assistant", "content": error_msg})
+    
+    # Control buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🗑️ Clear Chat", use_container_width=True, key="clear_chat_btn"):
+            st.session_state.genie_messages = []
+            st.session_state.genie_conversation_id = None
+            st.info("💡 Chat history cleared. Close this dialog to complete the reset.")
+    with col2:
+        if st.button("🔄 New Conversation", use_container_width=True, key="new_conv_btn"):
+            st.session_state.genie_conversation_id = None
+            st.toast("Started new conversation!", icon="🔄")
+
+
+def render_floating_chatbot():
+    """Render floating AI chatbot button"""
+    
+    # Initialize session state
+    if "genie_messages" not in st.session_state:
+        st.session_state.genie_messages = []
+    if "genie_conversation_id" not in st.session_state:
+        st.session_state.genie_conversation_id = None
+    
+    # Add floating button in sidebar
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🤖 Genie Integration", use_container_width=True, type="primary"):
+        try:
+            chatbot_dialog()
+        except Exception as e:
+            st.error(f"Error opening chatbot: {str(e)}")
+
+
 def main():
     """Main dashboard application"""
     
@@ -344,6 +716,9 @@ def main():
         show_race_details(selected_year)
     elif page == "Tire Strategy":
         show_tyre_strategy(selected_year, session_filter)
+    
+    # Floating AI Chatbot (available on all pages)
+    render_floating_chatbot()
 
 
 def show_overview(year: int = 2025):
