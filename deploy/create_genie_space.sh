@@ -131,32 +131,47 @@ TABLE_ARRAY+="]"
 echo ""
 echo -e "${YELLOW}🚀 Creating Genie Space...${NC}"
 
-# Create serialized_space configuration with proper structure
+# Sort tables alphabetically (required by Genie API)
+TABLE_ARRAY=$(echo "$TABLE_ARRAY" | jq -c 'sort')
+
+# Generate UUIDs without hyphens (lowercase 32-hex required for sample question IDs)
+UUID1=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
+UUID2=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
+UUID3=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
+UUID4=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
+UUID5=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
+
+# Create serialized_space configuration with proper structure (compact JSON)
 # Based on: https://docs.databricks.com/api/workspace/genie/createspace
-SPACE_CONFIG=$(jq -n \
+SPACE_CONFIG=$(jq -nc \
   --argjson tables "${TABLE_ARRAY}" \
+  --arg uuid1 "${UUID1}" \
+  --arg uuid2 "${UUID2}" \
+  --arg uuid3 "${UUID3}" \
+  --arg uuid4 "${UUID4}" \
+  --arg uuid5 "${UUID5}" \
   '{
     version: 1,
     config: {
       sample_questions: [
         {
-          id: "q1",
+          id: $uuid1,
           question: ["Show me the top 10 fastest laps from 2024"]
         },
         {
-          id: "q2",
+          id: $uuid2,
           question: ["Compare Red Bull and Mercedes pit stop performance"]
         },
         {
-          id: "q3",
+          id: $uuid3,
           question: ["What tire compounds were used most in the Monaco Grand Prix?"]
         },
         {
-          id: "q4",
+          id: $uuid4,
           question: ["Which driver had the most overtakes this season?"]
         },
         {
-          id: "q5",
+          id: $uuid5,
           question: ["What was the weather like during the last race?"]
         }
       ]

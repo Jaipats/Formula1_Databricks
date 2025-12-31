@@ -258,8 +258,22 @@ The creation scripts will provide the direct link.
 - **Command:** `git pull origin genie`
 - **Technical:** See proper structure below
 
+### Error: "data_sources.tables must be sorted by identifier" (400 Bad Request)
+- **Status:** ✅ Fixed in latest version
+- **Solution:** Update to latest code from genie branch
+- **Note:** Table identifiers must be in alphabetical order
+- **Command:** `git pull origin genie`
+- **Technical:** Use `all_tables.sort()` in Python or `jq 'sort'` in shell before creating space_config
+
+### Error: "Invalid id for sample_question.id" - Expected lowercase 32-hex UUID (400 Bad Request)
+- **Status:** ✅ Fixed in latest version
+- **Solution:** Update to latest code from genie branch
+- **Note:** Sample question IDs must be lowercase 32-character hex UUIDs without hyphens
+- **Command:** `git pull origin genie`
+- **Technical:** Python: `str(uuid.uuid4()).replace('-', '')`, Shell: `uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-'`
+
 ### ✅ Correct `serialized_space` Structure
-The `serialized_space` field must be a **JSON string** with this exact structure:
+The `serialized_space` field must be a **compact JSON string** (no spaces) with this exact structure:
 
 ```json
 {
@@ -281,10 +295,19 @@ The `serialized_space` field must be a **JSON string** with this exact structure
 ```
 
 **Key Requirements:**
-- Must be serialized as a JSON string: `json.dumps(space_config)`
+- Must be serialized as a **compact JSON string** (no spaces after colons/commas)
+- Python: `json.dumps(space_config, separators=(',', ':'))`
+- Shell/jq: `jq -nc` (compact output flag)
 - `version` must be `1`
 - Tables go in `data_sources.tables` as objects with `identifier` key
+- **Tables must be sorted alphabetically by identifier** (use `sort()` in Python, `jq 'sort'` in shell)
 - Sample questions are optional but recommended in `config.sample_questions`
+- **Sample question IDs must be lowercase 32-hex UUIDs without hyphens** (e.g., `a1b2c3d4e5f6789012345678901234ab`)
+
+**Example compact format:**
+```
+{"version":1,"config":{"sample_questions":[{"id":"a1b2c3d4e5f6789012345678901234ab","question":[...]}]},"data_sources":{"tables":[...]}}
+```
 
 ### Error: "Tables do not exist"
 - **Solution:** Run the DLT pipeline first to create tables

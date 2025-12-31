@@ -16,6 +16,7 @@ import os
 import sys
 import requests
 import json
+import uuid
 
 # Configuration
 DATABRICKS_HOST = os.getenv("DATABRICKS_HOST") or os.getenv("DATABRICKS_SERVER_HOSTNAME")
@@ -131,6 +132,9 @@ def create_genie_space():
         all_tables.append(full_table_name)
         print(f"   ✓ {full_table_name}")
     
+    # Sort tables alphabetically (required by Genie API)
+    all_tables.sort()
+    
     print()
     print("🚀 Creating Genie Space...")
     print(f"API Endpoint: https://{DATABRICKS_HOST}/api/2.0/genie/spaces")
@@ -146,28 +150,29 @@ def create_genie_space():
     
     # Genie API requires serialized_space as a JSON string with proper structure
     # Based on: https://docs.databricks.com/api/workspace/genie/createspace
+    # Sample question IDs must be lowercase 32-hex UUIDs without hyphens
     space_config = {
         "version": 1,
         "config": {
             "sample_questions": [
                 {
-                    "id": "q1",
+                    "id": str(uuid.uuid4()).replace('-', ''),
                     "question": ["Show me the top 10 fastest laps from 2024"]
                 },
                 {
-                    "id": "q2",
+                    "id": str(uuid.uuid4()).replace('-', ''),
                     "question": ["Compare Red Bull and Mercedes pit stop performance"]
                 },
                 {
-                    "id": "q3",
+                    "id": str(uuid.uuid4()).replace('-', ''),
                     "question": ["What tire compounds were used most in the Monaco Grand Prix?"]
                 },
                 {
-                    "id": "q4",
+                    "id": str(uuid.uuid4()).replace('-', ''),
                     "question": ["Which driver had the most overtakes this season?"]
                 },
                 {
-                    "id": "q5",
+                    "id": str(uuid.uuid4()).replace('-', ''),
                     "question": ["What was the weather like during the last race?"]
                 }
             ]
@@ -181,7 +186,7 @@ def create_genie_space():
         "title": GENIE_SPACE_NAME,
         "description": GENIE_SPACE_DESCRIPTION.strip(),
         "warehouse_id": DATABRICKS_WAREHOUSE_ID,
-        "serialized_space": json.dumps(space_config)  # Must be a JSON string!
+        "serialized_space": json.dumps(space_config, separators=(',', ':'))  # Compact JSON string
     }
     
     # Optional: Uncomment to debug payload

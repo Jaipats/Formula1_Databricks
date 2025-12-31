@@ -34,6 +34,7 @@
 import requests
 import json
 import os
+import uuid
 
 # Configuration
 CATALOG = "jai_patel_f1_data"
@@ -102,6 +103,9 @@ GOLD_TABLES = [
 all_tables = []
 all_tables.extend([f"{CATALOG}.{SCHEMA}.{table}" for table in SILVER_TABLES])
 all_tables.extend([f"{CATALOG}.{SCHEMA}.{table}" for table in GOLD_TABLES])
+
+# Sort tables alphabetically (required by Genie API)
+all_tables.sort()
 
 print(f"📊 Total Tables: {len(all_tables)}")
 print(f"   - Silver: {len(SILVER_TABLES)}")
@@ -192,28 +196,29 @@ headers = {
 
 # Request payload - serialized_space must be a JSON string with proper structure
 # Based on: https://docs.databricks.com/api/workspace/genie/createspace
+# Sample question IDs must be lowercase 32-hex UUIDs without hyphens
 space_config = {
     "version": 1,
     "config": {
         "sample_questions": [
             {
-                "id": "q1",
+                "id": str(uuid.uuid4()).replace('-', ''),
                 "question": ["Show me the top 10 fastest laps from 2024"]
             },
             {
-                "id": "q2",
+                "id": str(uuid.uuid4()).replace('-', ''),
                 "question": ["Compare Red Bull and Mercedes pit stop performance"]
             },
             {
-                "id": "q3",
+                "id": str(uuid.uuid4()).replace('-', ''),
                 "question": ["What tire compounds were used most in the Monaco Grand Prix?"]
             },
             {
-                "id": "q4",
+                "id": str(uuid.uuid4()).replace('-', ''),
                 "question": ["Which driver had the most overtakes this season?"]
             },
             {
-                "id": "q5",
+                "id": str(uuid.uuid4()).replace('-', ''),
                 "question": ["What was the weather like during the last race?"]
             }
         ]
@@ -227,7 +232,7 @@ payload = {
     "title": SPACE_NAME,
     "description": SPACE_DESCRIPTION.strip(),
     "warehouse_id": WAREHOUSE_ID,
-    "serialized_space": json.dumps(space_config)  # Convert to JSON string
+    "serialized_space": json.dumps(space_config, separators=(',', ':'))  # Compact JSON string
 }
 
 # Make API request
