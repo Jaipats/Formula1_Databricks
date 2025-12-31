@@ -121,14 +121,84 @@ ORDER BY avg_lap_time;
 
 ---
 
-## 🎉 Done!
+## Step 6: Set Up Streamlit Databricks App (Optional - 5 minutes)
 
-You now have a complete F1 data pipeline with:
+**After your data is loaded**, set up the interactive F1 analytics Databricks App:
+
+```bash
+# 1. Set environment variables
+export DATABRICKS_HOST='your-workspace.cloud.databricks.com'
+export DATABRICKS_TOKEN='your-personal-access-token'
+export DATABRICKS_HTTP_PATH='/sql/1.0/warehouses/your-warehouse-id'
+
+# 2. Run locally
+cd apps
+streamlit run app.py
+```
+
+**App Features:**
+- 📊 Season overview with key metrics
+- 🏁 Driver performance analysis (with comparison mode)
+- 🏆 Team analytics (Race sessions only)
+- 📈 Detailed race analysis with multiple charts
+- 🔧 Tire strategy analysis with team filtering
+
+**Production Deployment:**
+- Deploy as a Databricks App using `apps/app.yaml`
+- Credentials auto-injected in Databricks environment
+- No manual token configuration needed!
+
+**How to get your token (for local development):**
+1. Databricks UI → User Settings → Developer → Access Tokens
+2. Generate New Token → Copy immediately
+3. Set as `DATABRICKS_TOKEN` environment variable
+
+---
+
+## Step 7: Create Genie Space (Optional - 2 minutes)
+
+**After data is loaded and verified**, create a Genie Space for AI-powered natural language queries:
+
+**Method 1: Databricks Notebook (Easiest)**
+1. Open `notebooks/create_genie_space.py` in Databricks
+2. Run all cells
+3. Click the generated link to access your Genie Space
+
+**Method 2: CLI Script**
+```bash
+export DATABRICKS_HOST='your-workspace.cloud.databricks.com'
+export DATABRICKS_TOKEN='your-token'
+cd deploy
+./create_genie_space.sh
+```
+
+**What You Get:**
+- ✨ AI-powered analytics on 19 tables (13 silver + 6 gold)
+- 💬 Ask questions in natural language
+- 📊 Automatic query generation and visualization
+
+**Example Questions:**
+```
+"Show me the top 10 fastest laps from 2024"
+"Compare Red Bull and Mercedes pit stop performance"
+"What tire compounds were used most in Monaco?"
+"Which driver had the most overtakes this season?"
+```
+
+📖 **Full Guide:** See `GENIE_SPACE_GUIDE.md` for complete documentation
+
+---
+
+## 🎉 All Done!
+
+You now have a complete F1 analytics platform with:
 - ✅ Bronze tables (raw API data)
 - ✅ Silver tables (cleaned & validated)
 - ✅ Gold tables (analytics-ready)
 - ✅ Autoloader for incremental updates
 - ✅ Production-ready pipeline
+- ✅ Interactive Streamlit Databricks App (optional)
+- ✅ Genie Space for natural language queries (optional)
 
 ---
 
@@ -150,19 +220,35 @@ No manual steps needed - Autoloader detects and processes new files automaticall
 
 ## 📊 Next Steps
 
-### Build Dashboards
+### 1. Streamlit Databricks App (Recommended)
+```bash
+# Set up the interactive analytics app
+cd apps
+streamlit run app.py
+```
+**Features:** Driver comparisons, team analytics, race details, tire strategy
+
+### 2. Genie Space (Recommended)
+```bash
+# Create AI-powered analytics space
+cd deploy
+./create_genie_space.sh
+```
+**Benefit:** Ask questions in natural language, get instant insights
+
+### 3. Custom Dashboards
 ```sql
 -- Use queries from: dashboards/f1_race_analytics.sql
 -- Create visualizations in Databricks SQL
 ```
 
-### Explore Data
+### 4. Explore Data
 ```python
 # Run: notebooks/02_explore_data.py
-# Interactive data exploration
+# Interactive data exploration and analysis
 ```
 
-### Customize Pipeline
+### 5. Customize Pipeline
 - Edit `config/pipeline_config.yaml` for API settings
 - Modify Lakeflow notebooks for custom transformations
 - Add new endpoints or data sources
@@ -205,7 +291,10 @@ No manual steps needed - Autoloader detects and processes new files automaticall
 | 3. Run Ingestion | 20-30 min | Fetch API data → stage to volumes |
 | 4. Create Lakeflow Pipeline | 1 min | Configure pipeline |
 | 5. Run Lakeflow Pipeline | 10-15 min | Bronze → Silver → Gold |
-| **Total** | **35-50 min** | **Complete end-to-end pipeline!** |
+| **Core Pipeline Total** | **35-50 min** | **Complete data pipeline!** |
+| 6. Setup Databricks App (Optional) | 5 min | Configure and run Streamlit Databricks App |
+| 7. Create Genie Space (Optional) | 2 min | AI-powered analytics setup |
+| **Full Setup Total** | **42-57 min** | **Complete analytics platform!** |
 
 ---
 
