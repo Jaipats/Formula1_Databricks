@@ -49,20 +49,7 @@ WAREHOUSE_ID = os.getenv("DATABRICKS_WAREHOUSE_ID", "4b9b953939869799")  # Updat
 SPACE_NAME = "F1 Race Analytics"
 SPACE_DESCRIPTION = """Formula 1 Race Analytics Genie Space
 
-This space provides AI-powered analytics on Formula 1 racing data including:
-- Race sessions, meetings, and results
-- Driver performance and telemetry
-- Team comparisons and strategies
-- Pit stop analysis
-- Tire strategy and compound usage
-- Fastest laps and overtakes
-- Weather conditions and race control events
-
-Ask questions like:
-- Show me the fastest lap times for Lewis Hamilton in 2024
-- Compare pit stop durations between Red Bull and Mercedes
-- What tire compounds were used most in the Monaco Grand Prix?
-- Which drivers had the most overtakes this season?
+This space provides AI-powered analytics on Formula 1 racing datasets
 """
 
 # COMMAND ----------
@@ -203,7 +190,7 @@ space_config = {
         "sample_questions": [
             {
                 "id": str(uuid.uuid4()).replace('-', ''),
-                "question": ["Show me the top 10 fastest laps from 2024"]
+                "question": ["Show me the top 10 fastest laps from 2025"]
             },
             {
                 "id": str(uuid.uuid4()).replace('-', ''),
@@ -253,7 +240,7 @@ try:
         print("🎉 You can now use Genie to ask questions about your F1 data!")
         print()
         print("Access your Genie Space:")
-        print(f"https://{workspace_url}/genie/spaces/{space_id}")
+        print(f"https://{workspace_url}/genie/rooms/{space_id}")
         
         displayHTML(f"""
         <div style="padding: 20px; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;">
@@ -299,7 +286,7 @@ except Exception as e:
 # MAGIC Once your Genie Space is created, try these questions:
 # MAGIC
 # MAGIC ### Driver Performance
-# MAGIC - "Show me the top 10 fastest laps from 2024"
+# MAGIC - "Show me the top 10 fastest laps from 2025"
 # MAGIC - "What is Lewis Hamilton's average lap time this season?"
 # MAGIC - "Which driver has the most pole positions?"
 # MAGIC - "Compare Max Verstappen and Charles Leclerc lap times"
@@ -316,7 +303,7 @@ except Exception as e:
 # MAGIC - "Show me all race control messages for the last race"
 # MAGIC
 # MAGIC ### Tire Strategy
-# MAGIC - "What tire compounds were used most in 2024?"
+# MAGIC - "What tire compounds were used most in 2025?"
 # MAGIC - "Compare soft vs hard tire performance"
 # MAGIC - "Which team has the best tire strategy?"
 # MAGIC
@@ -341,4 +328,4 @@ except Exception as e:
 # MAGIC - Ask for comparisons to get interesting insights
 # MAGIC - Use follow-up questions to drill down into details
 # MAGIC - Genie learns from your questions and improves over time
-
+# MAGIC
