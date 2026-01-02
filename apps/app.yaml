@@ -9,3 +9,7 @@ env:
     valueFrom: "sql-warehouse"
   - name: STREAMLIT_BROWSER_GATHER_USAGE_STATS
     value: "false"
+  # Uncomment and set your Genie Space ID to enable AI Chatbot
+  # Get the Space ID from: python deploy/create_genie_space.py
+  # - name: GENIE_SPACE_ID
+  #   value: "your-genie-space-id-here"

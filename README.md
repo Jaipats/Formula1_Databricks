@@ -128,7 +128,7 @@ cd deploy
 
 **What is Genie?**
 Genie is an AI-powered analytics tool that lets you ask questions in natural language:
-- "Show me the top 10 fastest laps from 2024"
+- "Show me the top 10 fastest laps from 2025"
 - "Compare Red Bull and Mercedes pit stop performance"
 - "What tire compounds were used most in Monaco?"
 

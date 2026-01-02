@@ -13,7 +13,7 @@ This ensures Genie has access to all your F1 data for querying.
 
 Databricks Genie is an AI-powered conversational analytics tool that allows you to ask questions about your data in natural language. Instead of writing SQL queries, you can simply ask:
 
-> "Show me the top 10 fastest laps from 2024"
+> "Show me the top 10 fastest laps from 2025"
 
 And Genie will automatically:
 1. Understand your question
@@ -133,7 +133,7 @@ Once your Genie Space is created, try these questions:
 
 ### 🏎️ Driver Performance
 ```
-Show me the top 10 fastest laps from 2024
+Show me the top 10 fastest laps from 2025
 What is Lewis Hamilton's average lap time this season?
 Which driver has the most pole positions?
 Compare Max Verstappen and Charles Leclerc lap times
@@ -235,6 +235,101 @@ https://your-workspace.cloud.databricks.com/genie/spaces/{space_id}
 ```
 
 The creation scripts will provide the direct link.
+
+## 🤖 Integrate AI Chatbot with Streamlit App
+
+You can add an interactive AI chatbot to your Streamlit Databricks App powered by the Genie Space!
+
+### Step 1: Get Your Genie Space ID
+
+Run the helper script to find your Space ID:
+
+```bash
+python deploy/get_genie_space_id.py
+```
+
+This will list all Genie spaces and identify your F1 Analytics space.
+
+**Example output:**
+```
+✅ Found F1 Analytics Genie Space!
+======================================================================
+
+Space ID: a1b2c3d4e5f6789012345678901234ab
+
+📝 To enable the AI Chatbot in your Streamlit app:
+
+Option 1: Set environment variable (for local development)
+   export GENIE_SPACE_ID='a1b2c3d4e5f6789012345678901234ab'
+
+Option 2: Update app.yaml (for Databricks Apps)
+   ...
+```
+
+### Step 2: Configure the App
+
+#### For Local Development:
+
+```bash
+export GENIE_SPACE_ID='your-space-id-here'
+streamlit run apps/app.py
+```
+
+#### For Databricks Apps:
+
+Edit `apps/app.yaml` and add the environment variable:
+
+```yaml
+env:
+  - name: "DATABRICKS_WAREHOUSE_ID"
+    valueFrom: "sql-warehouse"
+  - name: STREAMLIT_BROWSER_GATHER_USAGE_STATS
+    value: "false"
+  - name: GENIE_SPACE_ID
+    value: "your-genie-space-id-here"  # Replace with your actual Space ID
+```
+
+### Step 3: Deploy the Updated App
+
+```bash
+# Databricks Apps will automatically pick up the new environment variable
+# Just redeploy your app or restart it
+```
+
+### Step 4: Use the AI Chatbot
+
+1. Open your Streamlit app
+2. Select **"🤖 AI Chatbot"** from the sidebar
+3. Ask questions in natural language!
+
+**Features:**
+- ✨ Natural language queries
+- 📊 Automatic SQL generation
+- 📈 Visual results and data tables
+- 💬 Conversation history
+- 🔄 Follow-up questions with context
+- 💡 Sample questions to get started
+
+**Example interaction:**
+```
+You: "Show me the top 10 fastest laps from 2025"
+
+AI: Here are the top 10 fastest laps from 2025:
+    [displays table with driver, lap time, session, etc.]
+    
+    The fastest lap was achieved by Max Verstappen with a time of 1:10.234
+    at the Monaco Grand Prix.
+```
+
+### API Reference
+
+The chatbot uses the [Databricks Genie Conversation API](https://docs.databricks.com/gcp/en/genie/conversation-api):
+
+- **Start Conversation**: `w.genie.start_conversation_and_wait(space_id, content)`
+- **Continue Conversation**: `w.genie.execute_message_query_and_wait(space_id, conversation_id, content)`
+- **List Spaces**: `w.genie.list_spaces()`
+
+**Authentication**: Uses the same Databricks SDK authentication as the rest of the app (OAuth 2.0 for Databricks Apps).
 
 ## 🐛 Troubleshooting
 

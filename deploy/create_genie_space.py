@@ -157,7 +157,7 @@ def create_genie_space():
             "sample_questions": [
                 {
                     "id": str(uuid.uuid4()).replace('-', ''),
-                    "question": ["Show me the top 10 fastest laps from 2024"]
+                    "question": ["Show me the top 10 fastest laps from 2025"]
                 },
                 {
                     "id": str(uuid.uuid4()).replace('-', ''),
@@ -213,7 +213,7 @@ def create_genie_space():
             print("🎉 You can now use Genie to ask questions about your F1 data!")
             print()
             print("Example questions:")
-            print("  - Show me the top 10 fastest laps from 2024")
+            print("  - Show me the top 10 fastest laps from 2025")
             print("  - Compare Red Bull and Mercedes pit stop performance")
             print("  - What was the weather like during the Monaco Grand Prix?")
             print("  - Which driver had the most overtakes this season?")

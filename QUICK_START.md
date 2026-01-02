@@ -179,7 +179,7 @@ cd deploy
 
 **Example Questions:**
 ```
-"Show me the top 10 fastest laps from 2024"
+"Show me the top 10 fastest laps from 2025"
 "Compare Red Bull and Mercedes pit stop performance"
 "What tire compounds were used most in Monaco?"
 "Which driver had the most overtakes this season?"
